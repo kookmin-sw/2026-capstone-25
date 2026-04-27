@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 960" font-family="'맑은 고딕', 'Malgun Gothic', sans-serif">
+  <defs>
+    <marker id="arrD" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 12 6 L 0 12 Z" fill="#FF6B3D"/>
+    </marker>
+    <marker id="arrP" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 12 6 L 0 12 Z" fill="#8B5CF6"/>
+    </marker>
+    <marker id="arrG" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 12 6 L 0 12 Z" fill="#22A560"/>
+    </marker>
+    <filter id="sd" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.1"/>
+    </filter>
+  </defs>
+  <rect width="1400" height="960" fill="#FAFAFC"/>
+
+  <text x="60" y="50" font-size="28" font-weight="700" fill="#222">세부 파이프라인 — 요청·서버·응답 3레인 (5단)</text>
+  <text x="60" y="78" font-size="15" fill="#666">클라이언트 입력 → 서버 5단 처리 → 클라이언트 4블록 응답. DECOMPOSE 하나가 분석·분해를 통합 수행한다.</text>
+  <rect x="60" y="90" width="80" height="4" fill="#FF6B3D" rx="2"/>
+
+  <g>
+    <rect x="40" y="125" width="220" height="800" rx="14" fill="#FFF4EE" stroke="#FFD1BC"/>
+    <text x="150" y="160" text-anchor="middle" font-size="16" font-weight="700" fill="#B0451F">CLIENT · 입력</text>
+    <text x="150" y="180" text-anchor="middle" font-size="11" fill="#8A4726">React SPA</text>
+  </g>
+  <g>
+    <rect x="280" y="125" width="840" height="800" rx="14" fill="#F7F4FF" stroke="#D9CEF6"/>
+    <text x="700" y="160" text-anchor="middle" font-size="16" font-weight="700" fill="#5E3BBF">SERVER · 5단 처리</text>
+    <text x="700" y="180" text-anchor="middle" font-size="11" fill="#7052C2">Express.js + Claude Haiku 4.5 + Supabase</text>
+  </g>
+  <g>
+    <rect x="1140" y="125" width="220" height="800" rx="14" fill="#EEF9F2" stroke="#BCE5CD"/>
+    <text x="1250" y="160" text-anchor="middle" font-size="16" font-weight="700" fill="#1E7D48">CLIENT · 결과 화면</text>
+    <text x="1250" y="180" text-anchor="middle" font-size="11" fill="#2A8C54">4블록 UI</text>
+  </g>
+
+  <g transform="translate(60,220)">
+    <rect width="180" height="70" rx="10" fill="#FF6B3D" filter="url(#sd)"/>
+    <text x="90" y="30" text-anchor="middle" font-size="13" font-weight="700" fill="#FFF">입력 화면</text>
+    <text x="90" y="50" text-anchor="middle" font-size="10" fill="#FFE7DC">텍스트 + 선택적 첨부</text>
+  </g>
+
+  <line x1="240" y1="255" x2="278" y2="255" stroke="#FF6B3D" stroke-width="2.5" marker-end="url(#arrD)"/>
+
+  <g transform="translate(300,220)">
+    <rect width="800" height="80" rx="10" fill="#FFF" stroke="#FF6B3D" stroke-width="1.5" filter="url(#sd)"/>
+    <text x="14" y="24" font-size="13" font-weight="700" fill="#FF6B3D">① INTAKE</text>
+    <text x="14" y="44" font-size="11" fill="#444">텍스트·파일 수용, pdf·docx·txt 추출, 빈·과다 입력 차단, 형식 가드레일</text>
+    <text x="14" y="62" font-size="10" fill="#888">출력: { rawText, meta } · 서버 내부 (AI 호출 없음)</text>
+  </g>
+
+  <g transform="translate(300,315)">
+    <rect width="800" height="200" rx="10" fill="#F7F2FF" stroke="#8B5CF6" stroke-width="2" filter="url(#sd)"/>
+    <text x="14" y="26" font-size="14" font-weight="700" fill="#5E3BBF">② DECOMPOSE · AI 단일 호출 (Claude Haiku 4.5)</text>
+    <text x="14" y="50" font-size="11" fill="#333">프롬프트: [고정 접두부 — 시스템 + 6 신호 + 3 규칙 + JSON 스키마] (cache_control: ephemeral) + [사용자 원문]</text>
+
+    <rect x="14" y="66" width="380" height="120" rx="6" fill="#FFF" stroke="#D9CEF6"/>
+    <text x="24" y="84" font-size="11" font-weight="700" fill="#5E3BBF">분석 (Analysis)</text>
+    <text x="24" y="104" font-size="10" fill="#444">• 프로젝트 유형 분류 (primary + secondary tags)</text>
+    <text x="24" y="122" font-size="10" fill="#444">• 목표 1문장 정제</text>
+    <text x="24" y="140" font-size="10" fill="#444">• 현재 phase 파악</text>
+    <text x="24" y="158" font-size="10" fill="#444">• 제약 조건 · 필요 명확화 여부</text>
+    <text x="24" y="176" font-size="10" fill="#888" font-style="italic">→ analysis 섹션</text>
+
+    <rect x="410" y="66" width="380" height="120" rx="6" fill="#FFF" stroke="#D9CEF6"/>
+    <text x="420" y="84" font-size="11" font-weight="700" fill="#5E3BBF">분해 (Decomposition)</text>
+    <text x="420" y="104" font-size="10" fill="#444">• 6 신호 기반 경계 탐색</text>
+    <text x="420" y="122" font-size="10" fill="#444">• 3 규칙으로 각 단계 기술</text>
+    <text x="420" y="140" font-size="10" fill="#444">• 단계별 예상 시간 · 의존성</text>
+    <text x="420" y="158" font-size="10" fill="#444">• 가이드라인 3문장 생성</text>
+    <text x="420" y="176" font-size="10" fill="#888" font-style="italic">→ steps 배열</text>
+  </g>
+
+  <g transform="translate(300,530)">
+    <rect width="800" height="90" rx="10" fill="#F3FAF5" stroke="#22A560" stroke-width="2" filter="url(#sd)"/>
+    <text x="14" y="24" font-size="13" font-weight="700" fill="#1E7D48">③ VALIDATE · 2층 검증</text>
+    <text x="14" y="44" font-size="11" fill="#333">1층 · 경계 품질: 의존성 루프 · 중복 · 공백 검사</text>
+    <text x="14" y="62" font-size="11" fill="#333">2층 · 단계 품질: 구체성 · 즉시성 · 판정 가능성 (모호 동사·주관 부사 사전 대조)</text>
+    <text x="14" y="80" font-size="10" fill="#2A8C54">위반 단계 자동 리라이트, 실패 시 DECOMPOSE 1회 재호출 (입력 캐시 적중 → 저비용)</text>
+  </g>
+
+  <g transform="translate(300,635)">
+    <rect width="800" height="90" rx="10" fill="#F3FAF5" stroke="#22A560" stroke-width="2" filter="url(#sd)"/>
+    <text x="14" y="24" font-size="13" font-weight="700" fill="#1E7D48">④ PRESENT · 4블록 포장</text>
+    <text x="14" y="44" font-size="11" fill="#333">결과 / AI 추론 / 재분해 / 확정·수정 — 블록별 데이터 구조 분리</text>
+    <text x="14" y="62" font-size="11" fill="#333">DB 기록: projects · decompositions(차수) · steps(트리) · reasoning_logs</text>
+    <text x="14" y="80" font-size="10" fill="#2A8C54">각 단계는 펼치면 예상 시간 · 가이드라인 · 쪼개기 버튼 노출</text>
+  </g>
+
+  <g transform="translate(300,740)">
+    <rect width="800" height="100" rx="10" fill="#FFFBEA" stroke="#FFC043" stroke-width="2" filter="url(#sd)"/>
+    <text x="14" y="24" font-size="13" font-weight="700" fill="#8A5A00">⑤ REFINE · 사용자 주도 재진입</text>
+    <text x="14" y="44" font-size="11" fill="#333">2차 쪼개기: 단계 1개를 선택 → 해당 부분만 재분해 (실행 단위 수준으로)</text>
+    <text x="14" y="62" font-size="11" fill="#333">재분해: 전체 결과를 피드백 담아 다시 / 직접 수정: 사용자가 문구 편집</text>
+    <text x="14" y="82" font-size="10" fill="#8A5A00">DECOMPOSE 재호출 시 프롬프트 접두부 캐시 재사용 → 90% 할인 · TTFB 단축</text>
+  </g>
+
+  <path d="M 1100 790 Q 1120 790 1120 415 Q 1120 430 1100 430" fill="none" stroke="#FFC043" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrP)"/>
+  <text x="1128" y="612" font-size="10" fill="#8A5A00" font-style="italic">재진입</text>
+
+  <g transform="translate(1160,220)">
+    <rect width="180" height="170" rx="10" fill="#FFF" stroke="#22A560" stroke-width="1.5" filter="url(#sd)"/>
+    <rect width="180" height="6" fill="#22A560" rx="3"/>
+    <text x="14" y="28" font-size="13" font-weight="700" fill="#1E7D48">① 결과 블록</text>
+    <text x="14" y="50" font-size="10" fill="#333">단계 리스트(접힘 기본)</text>
+    <text x="14" y="68" font-size="10" fill="#333">펼침 시:</text>
+    <text x="22" y="86" font-size="10" fill="#555">• 예상 시간</text>
+    <text x="22" y="102" font-size="10" fill="#555">• 가이드라인</text>
+    <text x="22" y="118" font-size="10" fill="#555">• 쪼개기 버튼</text>
+    <text x="14" y="148" font-size="10" fill="#888" font-style="italic">각 단계 카드가 UI의 중심</text>
+  </g>
+
+  <g transform="translate(1160,410)">
+    <rect width="180" height="130" rx="10" fill="#FFF" stroke="#22A560" stroke-width="1.5" filter="url(#sd)"/>
+    <rect width="180" height="6" fill="#22A560" rx="3"/>
+    <text x="14" y="28" font-size="13" font-weight="700" fill="#1E7D48">② AI 추론 블록</text>
+    <text x="14" y="50" font-size="10" fill="#333">분석 결과 요약</text>
+    <text x="14" y="68" font-size="10" fill="#333">(유형·목표·현재 phase)</text>
+    <text x="14" y="86" font-size="10" fill="#333">경계 선택 근거</text>
+    <text x="14" y="104" font-size="10" fill="#333">(어떤 6 신호로 끊었는가)</text>
+  </g>
+
+  <g transform="translate(1160,560)">
+    <rect width="180" height="110" rx="10" fill="#FFF" stroke="#22A560" stroke-width="1.5" filter="url(#sd)"/>
+    <rect width="180" height="6" fill="#22A560" rx="3"/>
+    <text x="14" y="28" font-size="13" font-weight="700" fill="#1E7D48">③ 재분해 블록</text>
+    <text x="14" y="50" font-size="10" fill="#333">더 잘게 / 더 크게</text>
+    <text x="14" y="68" font-size="10" fill="#333">피드백 입력란</text>
+    <text x="14" y="86" font-size="10" fill="#333">→ ⑤ REFINE 진입</text>
+  </g>
+
+  <g transform="translate(1160,690)">
+    <rect width="180" height="110" rx="10" fill="#FFF" stroke="#22A560" stroke-width="1.5" filter="url(#sd)"/>
+    <rect width="180" height="6" fill="#22A560" rx="3"/>
+    <text x="14" y="28" font-size="13" font-weight="700" fill="#1E7D48">④ 확정·수정 블록</text>
+    <text x="14" y="50" font-size="10" fill="#333">직접 문구 수정</text>
+    <text x="14" y="68" font-size="10" fill="#333">확정 → 저장</text>
+    <text x="14" y="86" font-size="10" fill="#333">캘린더로 이동</text>
+  </g>
+
+  <line x1="1100" y1="680" x2="1158" y2="680" stroke="#22A560" stroke-width="2" marker-end="url(#arrG)" stroke-dasharray="4,3"/>
+
+  <g transform="translate(40,870)">
+    <rect width="1320" height="60" rx="10" fill="#1F1F1F"/>
+    <text x="20" y="26" font-size="13" fill="#FFC043" font-weight="700">상태 흐름</text>
+    <text x="20" y="48" font-size="11" fill="#FFF">idle → intake → decomposing(스피너) → validating(밀리초) → presenting(블록 렌더) → refining(선택) → saved(캘린더 가능)</text>
+  </g>
+</svg>

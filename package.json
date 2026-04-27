@@ -1,0 +1,24 @@
+{
+  "name": "hanbaljjak",
+  "version": "0.1.0",
+  "private": true,
+  "description": "한발짝 - AI 기반 작업 분해 도구 (모노레포 루트)",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "npm-run-all --parallel dev:frontend dev:backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:backend": "npm run dev --workspace=backend",
+    "build": "npm run build --workspace=frontend && npm run build --workspace=backend",
+    "typecheck": "npm run typecheck --workspace=frontend && npm run typecheck --workspace=backend",
+    "lint": "npm run lint --workspace=frontend && npm run lint --workspace=backend"
+  },
+  "devDependencies": {
+    "npm-run-all2": "^7.0.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

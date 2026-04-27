@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 840" font-family="'맑은 고딕', 'Malgun Gothic', sans-serif">
+  <defs>
+    <filter id="sh" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.1"/>
+    </filter>
+  </defs>
+  <rect width="1400" height="840" fill="#FBFBFC"/>
+
+  <text x="60" y="50" font-size="28" font-weight="700" fill="#222">AI 분해 논리 — 맥락 기반 의미 분할</text>
+  <text x="60" y="78" font-size="15" fill="#666">통합 단일 호출 설계. 분석과 분해를 하나의 AI 호출에서 함께 수행하며, 6 신호로 경계를 찾고 3 규칙으로 각 단계를 기술한다.</text>
+  <rect x="60" y="90" width="80" height="4" fill="#FF6B3D" rx="2"/>
+
+  <text x="60" y="135" font-size="16" font-weight="700" fill="#FF6B3D">① 나눌 지점을 찾는 6 신호 — "어디서 끊는가"</text>
+
+  <g transform="translate(40,155)">
+    <rect width="430" height="170" rx="12" fill="#FFFFFF" stroke="#E5E5EA" filter="url(#sh)"/>
+    <rect width="430" height="6" fill="#FF6B3D" rx="3"/>
+    <circle cx="30" cy="42" r="15" fill="#FF6B3D"/>
+    <text x="30" y="48" text-anchor="middle" font-size="15" font-weight="700" fill="#FFFFFF">①</text>
+    <text x="56" y="36" font-size="18" font-weight="700" fill="#222">Phase 전환</text>
+    <text x="56" y="56" font-size="11" fill="#888">Phase Boundary</text>
+    <text x="20" y="86" font-size="12" fill="#333">프로젝트 진행 단계(phase)가 바뀌는 지점.</text>
+    <text x="20" y="104" font-size="12" fill="#333">맥락상 가장 강한 경계로 작동한다.</text>
+    <text x="20" y="148" font-size="11" fill="#FF6B3D" font-style="italic">예) 논문: "선행 연구 조사 → 방법론 설계" 전환점</text>
+  </g>
+
+  <g transform="translate(485,155)">
+    <rect width="430" height="170" rx="12" fill="#FFFFFF" stroke="#E5E5EA" filter="url(#sh)"/>
+    <rect width="430" height="6" fill="#FF6B3D" rx="3"/>
+    <circle cx="30" cy="42" r="15" fill="#FF6B3D"/>
+    <text x="30" y="48" text-anchor="middle" font-size="15" font-weight="700" fill="#FFFFFF">②</text>
+    <text x="56" y="36" font-size="18" font-weight="700" fill="#222">산출물 단위</text>
+    <text x="56" y="56" font-size="11" fill="#888">Artifact Boundary</text>
+    <text x="20" y="86" font-size="12" fill="#333">관찰 가능한 결과물이 손에 쥐어지는 지점.</text>
+    <text x="20" y="104" font-size="12" fill="#333">'뭔가 끝냈다'는 감각을 만드는 자연 경계.</text>
+    <text x="20" y="148" font-size="11" fill="#FF6B3D" font-style="italic">예) "개요 한 장", "초록 초안", "핵심 도표"</text>
+  </g>
+
+  <g transform="translate(930,155)">
+    <rect width="430" height="170" rx="12" fill="#FFFFFF" stroke="#E5E5EA" filter="url(#sh)"/>
+    <rect width="430" height="6" fill="#FF6B3D" rx="3"/>
+    <circle cx="30" cy="42" r="15" fill="#FF6B3D"/>
+    <text x="30" y="48" text-anchor="middle" font-size="15" font-weight="700" fill="#FFFFFF">③</text>
+    <text x="56" y="36" font-size="18" font-weight="700" fill="#222">판단·결정 지점</text>
+    <text x="56" y="56" font-size="11" fill="#888">Decision Point</text>
+    <text x="20" y="86" font-size="12" fill="#333">다음 단계의 방향을 정하는 선택이 필요한 지점.</text>
+    <text x="20" y="104" font-size="12" fill="#333">결정 앞에서 끊어 숙고 여지를 남긴다.</text>
+    <text x="20" y="148" font-size="11" fill="#FF6B3D" font-style="italic">예) "세 방법론 중 하나 결정" 앞에서 분리</text>
+  </g>
+
+  <g transform="translate(40,345)">
+    <rect width="430" height="170" rx="12" fill="#FFFFFF" stroke="#E5E5EA" filter="url(#sh)"/>
+    <rect width="430" height="6" fill="#FF6B3D" rx="3"/>
+    <circle cx="30" cy="42" r="15" fill="#FF6B3D"/>
+    <text x="30" y="48" text-anchor="middle" font-size="15" font-weight="700" fill="#FFFFFF">④</text>
+    <text x="56" y="36" font-size="18" font-weight="700" fill="#222">사고 모드 전환</text>
+    <text x="56" y="56" font-size="11" fill="#888">Cognitive Mode Shift</text>
+    <text x="20" y="86" font-size="12" fill="#333">인지 모드가 바뀌는 지점 — 읽기 ↔ 쓰기,</text>
+    <text x="20" y="104" font-size="12" fill="#333">분석 ↔ 발산, 이해 ↔ 판단 사이에서 끊는다.</text>
+    <text x="20" y="148" font-size="11" fill="#FF6B3D" font-style="italic">예) "선행 연구 읽기" → "선행 연구 정리하기"</text>
+  </g>
+
+  <g transform="translate(485,345)">
+    <rect width="430" height="170" rx="12" fill="#FFFFFF" stroke="#E5E5EA" filter="url(#sh)"/>
+    <rect width="430" height="6" fill="#FF6B3D" rx="3"/>
+    <circle cx="30" cy="42" r="15" fill="#FF6B3D"/>
+    <text x="30" y="48" text-anchor="middle" font-size="15" font-weight="700" fill="#FFFFFF">⑤</text>
+    <text x="56" y="36" font-size="18" font-weight="700" fill="#222">의존성 완결</text>
+    <text x="56" y="56" font-size="11" fill="#888">Dependency Closure</text>
+    <text x="20" y="86" font-size="12" fill="#333">앞 단계가 끝나야 다음 단계가 가능한 최소 경계.</text>
+    <text x="20" y="104" font-size="12" fill="#333">병렬 가능은 묶지 않고 "순서 무관" 태그로 표시.</text>
+    <text x="20" y="148" font-size="11" fill="#FF6B3D" font-style="italic">예) "데이터 수집 완료" → "분석 시작"</text>
+  </g>
+
+  <g transform="translate(930,345)">
+    <rect width="430" height="170" rx="12" fill="#FFFFFF" stroke="#E5E5EA" filter="url(#sh)"/>
+    <rect width="430" height="6" fill="#FF6B3D" rx="3"/>
+    <circle cx="30" cy="42" r="15" fill="#FF6B3D"/>
+    <text x="30" y="48" text-anchor="middle" font-size="15" font-weight="700" fill="#FFFFFF">⑥</text>
+    <text x="56" y="36" font-size="18" font-weight="700" fill="#222">실행 환경 전환</text>
+    <text x="56" y="56" font-size="11" fill="#888">Context Switch</text>
+    <text x="20" y="86" font-size="12" fill="#333">도구·장소·시간대가 바뀌는 지점. 이동·준비</text>
+    <text x="20" y="104" font-size="12" fill="#333">비용이 발생하는 지점에서 묶어 끊는다.</text>
+    <text x="20" y="148" font-size="11" fill="#FF6B3D" font-style="italic">예) "도서관 자료 수집" → "노트북 집필"</text>
+  </g>
+
+  <line x1="40" y1="548" x2="1360" y2="548" stroke="#E5E5EA" stroke-width="1"/>
+
+  <text x="60" y="582" font-size="16" font-weight="700" fill="#22A560">② 각 단계의 품질 3 규칙 — "어떻게 기술하는가"</text>
+
+  <g transform="translate(40,600)">
+    <rect width="430" height="160" rx="12" fill="#F3FAF5" stroke="#BCE5CD" filter="url(#sh)"/>
+    <rect width="430" height="6" fill="#22A560" rx="3"/>
+    <text x="20" y="42" font-size="18" font-weight="700" fill="#22A560">구체성 · Specificity</text>
+    <text x="20" y="76" font-size="12" fill="#333">동사 + 구체 대상 + 가시 산출물을 모두 가진다.</text>
+    <text x="20" y="94" font-size="12" fill="#333">모호 동사 사전에 걸리면 자동 리라이트.</text>
+    <text x="20" y="132" font-size="11" fill="#22A560" font-style="italic">"연구하기" → "핵심 논문 3편 초록·결론 정리"</text>
+  </g>
+
+  <g transform="translate(485,600)">
+    <rect width="430" height="160" rx="12" fill="#F3FAF5" stroke="#BCE5CD" filter="url(#sh)"/>
+    <rect width="430" height="6" fill="#22A560" rx="3"/>
+    <text x="20" y="42" font-size="18" font-weight="700" fill="#22A560">즉시성 · Immediacy</text>
+    <text x="20" y="76" font-size="12" fill="#333">지금 · 혼자 · 바로 시작 가능. 외부 대기 요소는</text>
+    <text x="20" y="94" font-size="12" fill="#333">'기다림' 태그로 분리해 실행 풀에서 제외한다.</text>
+    <text x="20" y="132" font-size="11" fill="#22A560" font-style="italic">피드백 대기 중이면 '기다림' 태그 부착</text>
+  </g>
+
+  <g transform="translate(930,600)">
+    <rect width="430" height="160" rx="12" fill="#F3FAF5" stroke="#BCE5CD" filter="url(#sh)"/>
+    <rect width="430" height="6" fill="#22A560" rx="3"/>
+    <text x="20" y="42" font-size="18" font-weight="700" fill="#22A560">판정 가능성 · Verifiability</text>
+    <text x="20" y="76" font-size="12" fill="#333">완료 상태가 파일·메시지·제출·체크·수치 중</text>
+    <text x="20" y="94" font-size="12" fill="#333">하나로 관찰 가능. 주관 부사는 자동 리라이트.</text>
+    <text x="20" y="132" font-size="11" fill="#22A560" font-style="italic">"충분히 공부" → "3장 연습문제 10개 풀기"</text>
+  </g>
+
+  <g transform="translate(40,785)">
+    <rect width="1320" height="40" rx="8" fill="#1F1F1F"/>
+    <text x="20" y="26" font-size="12" fill="#FFC043" font-weight="700">두 레이어는 하나의 AI 호출 안에서 함께 작동 · </text>
+    <text x="340" y="26" font-size="12" fill="#FFFFFF">6 신호로 "어디서 경계를 둘지"를, 3 규칙으로 "각 조각을 어떻게 기술할지"를 결정한다. 통합 단일 호출이 분석과 분해를 한번에 수행한다.</text>
+  </g>
+</svg>
