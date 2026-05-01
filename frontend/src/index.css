@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+/*
+ * 한발짝 디자인 토큰 — 프로토타입 hanbaljjak_v12.html :root 와 동일.
+ * Tailwind v4 의 @theme 블록은 자동으로 유틸리티(`bg-ac`, `text-tx2`, `font-title` 등)를 생성한다.
+ *
+ * | 브레이크포인트          | 레이아웃                                                  |
+ * |------------------------|---------------------------------------------------------|
+ * | ≤767px (모바일)         | 헤더 상단 + 콘텐츠 스크롤 + 하단 네비                        |
+ * | 768–1023px (태블릿)     | 동일 세로 배치 + 콘텐츠 폭 720px                            |
+ * | ≥1024px (데스크탑)      | 좌측 사이드바 248px + 중앙 콘텐츠 960px                     |
+ * | ≥1440px (와이드)        | 프로젝트 리스트 3열 그리드, 콘텐츠 1200px                    |
+ * | ≥1800px (초대형)        | 콘텐츠 1320px, 프로젝트 4열 그리드                          |
+ */
+@theme {
+  /* 브레이크포인트 — sm 은 설계에 없으므로 비활성 */
+  --breakpoint-sm: initial;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1440px;
+  --breakpoint-2xl: 1800px;
+
+  /* ── 색상 토큰 ── */
+  /* 표면(surface) */
+  --color-bg: #FFF8F1;          /* 페이지 배경 */
+  --color-sf: #FFFFFF;          /* 카드·헤더·네비 */
+  --color-sf2: #FFFBF5;         /* 약한 강조 표면 */
+
+  /* 액센트(주황) */
+  --color-ac: #FF9478;          /* 메인 */
+  --color-ac-d: #FF7A58;        /* 강조(텍스트·아이콘) */
+  --color-ac-s: #FFF0E8;        /* 옅은 배경(필·활성탭) */
+  --color-ac-s2: #FFE1D4;       /* 옅은 보더 */
+
+  /* 글자 / 회색조 */
+  --color-tx: #3D2F27;          /* 본문 텍스트 */
+  --color-tx2: #6B5A4E;         /* 보조 텍스트 */
+  --color-mu: #B5A495;          /* 비활성 라벨 */
+  --color-mu2: #D9CCBE;         /* 플레이스홀더 */
+
+  /* 보더 / 약한 강조 배경 */
+  --color-fa: #FFF3EA;          /* hover 배경 */
+  --color-bd: #F5E6D8;          /* 기본 보더 */
+  --color-bd2: #FAEFE3;         /* 카드 보더 */
+
+  /* ── 상태색 ── */
+  --color-gn: #7BC496;          /* green */
+  --color-gn-s: #ECF7F0;        /* green-small */
+  --color-yl: #FFD88A;          /* yellow */
+  --color-pk: #FFB5C5;          /* pink */
+  --color-rd: #FF6B6B;          /* red */
+
+  /* 폰트 패밀리 */
+  --font-body: "Noto Sans KR", -apple-system, sans-serif;
+  --font-title: "Gaegu", "Noto Sans KR", sans-serif;
+}
+
+/* 본문 — 프로토타입 body 와 동일 */
+html,
+body {
+  height: 100%;
+}
+body {
+  font-family: var(--font-body);
+  /* background: var(--color-bg); */
+  color: var(--color-tx);
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
