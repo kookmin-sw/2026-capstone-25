@@ -1,7 +1,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AppShell from "./components/AppShell";
+import SessionGuard from "./components/SessionGuard";
 import HomePage from "./pages/HomePage";
 import AllPage from "./pages/AllPage";
+import LoginPage from "./pages/LoginPage";
 
 // 각 탭의 placeholder
 function CalendarPage() {
@@ -18,7 +20,14 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route element={<AppShell />}>
+        <Route path="/login" element={<LoginPage />} />
+        <Route
+          element={
+            <SessionGuard>
+              <AppShell />
+            </SessionGuard>
+          }
+        >
           <Route path="/" element={<HomePage />} />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/all" element={<AllPage />} />

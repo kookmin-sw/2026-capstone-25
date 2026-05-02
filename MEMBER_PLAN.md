@@ -188,12 +188,12 @@
 | **PR 브랜치** | `feat/auth` |
 
 **산출물**:
-- [ ] `frontend/src/lib/supabase.ts` (anon 키)
-- [ ] `backend/src/lib/supabase.ts` (service_role 키)
-- [ ] `pages/LoginPage.tsx` (Supabase Auth UI 또는 자체 폼 — Email + Magic Link)
-- [ ] `components/SessionGuard.tsx` (세션 없으면 /login으로 redirect)
-- [ ] `backend/src/middleware/auth.ts` (Authorization JWT 검증 → req.userId)
-- [ ] `backend/src/routes/me.ts` (GET /api/me — 본인 프로필 반환)
+- [x] `frontend/src/lib/supabase.ts` (anon 키)
+- [x] `backend/src/lib/supabase.ts` (service_role 키)
+- [x] `pages/LoginPage.tsx` (Supabase Auth UI 또는 자체 폼 — Email + Magic Link)
+- [x] `components/SessionGuard.tsx` (세션 없으면 /login으로 redirect)
+- [x] `backend/src/middleware/auth.ts` (Authorization JWT 검증 → req.userId)
+- [x] `backend/src/routes/me.ts` (GET /api/me — 본인 프로필 반환)
 
 ### J3. 프로젝트 라우트 + 전체 탭 목록 — **지희**
 
