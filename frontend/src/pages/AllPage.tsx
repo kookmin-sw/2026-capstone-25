@@ -3,6 +3,8 @@ import ProjectCard from "../components/all/ProjectCard";
 import SingleCard from "../components/all/SingleCard";
 import { deleteProject, listProjects, type ProjectSummary } from "../services/projects";
 
+// 전체 탭 목록 모드.
+// DB 프로젝트를 마감일별로 묶고, 빈 상태/로딩/에러 상태를 함께 관리한다.
 type ProjectGroup = {
   key: string;
   label: string;

@@ -1,6 +1,8 @@
 import type { NextFunction, Request, Response } from "express";
 import { supabase } from "../lib/supabase.js";
 
+// Authorization: Bearer <access_token>을 검증하고 req.userId를 채운다.
+// 보호 API는 이 미들웨어 뒤에서 현재 로그인 유저 기준으로 DB를 조회한다.
 declare global {
   namespace Express {
     interface Request {

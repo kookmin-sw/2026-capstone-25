@@ -1,6 +1,8 @@
 import { ChevronRight, Trash2 } from "lucide-react";
 import type { ProjectSummary } from "../../services/projects";
 
+// AI로 분해된 일반 프로젝트 카드.
+// 진행률, 다음 할 일, 삭제 액션을 목록에서 보여준다.
 type Props = {
   project: ProjectSummary;
   onDelete: (id: string) => void;

@@ -4,6 +4,8 @@ import { authMiddleware } from "../middleware/auth.js";
 import { supabase } from "../lib/supabase.js";
 import { CreateProjectSchema } from "../schemas/project.js";
 
+// 전체 탭에서 쓰는 프로젝트 API.
+// 프로젝트 생성, 목록 조회, 삭제를 담당한다.
 const router = Router();
 
 type ProjectRow = {

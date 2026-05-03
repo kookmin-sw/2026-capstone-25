@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+// POST /api/projects 요청 body 검증용 스키마.
+// ConfirmBlock이 붙으면 이 형태로 프로젝트와 단계들을 저장한다.
 export const CreateStepSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),

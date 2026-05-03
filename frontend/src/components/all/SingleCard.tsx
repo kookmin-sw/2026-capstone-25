@@ -1,6 +1,8 @@
 import { Trash2 } from "lucide-react";
 import type { ProjectSummary } from "../../services/projects";
 
+// AI 분해 없이 저장된 단일 작업 카드.
+// 상세 화면 없이 체크/시작/삭제 중심으로 보여준다.
 type Props = {
   project: ProjectSummary;
   onDelete: (id: string) => void;

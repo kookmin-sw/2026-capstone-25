@@ -1,5 +1,7 @@
 import { supabase } from "../lib/supabase";
 
+// /all 화면에서 쓰는 프로젝트 API 호출 함수 모음.
+// 매 요청마다 Supabase access_token을 Authorization 헤더에 붙인다.
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
 
 export type ProjectSummary = {
