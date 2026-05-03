@@ -41,7 +41,7 @@ export default function LoginPage() {
 
     setStatus("success");
     if (data.session) {
-      setMessage(mode === "sign-in" ? "로그인했어요." : "회원가입이 완료됐어요. 바로 시작할게요.");
+      setMessage(mode === "sign-in" ? "로그인 성공했어요." : "회원가입 성공했어요.");
       setIsSignedIn(true);
       return;
     }

@@ -118,6 +118,7 @@ async function decomposeOnce(input: DecomposeRequest): Promise<DecomposeResult |
   return result.data;
 }
 
+// POST 요청
 router.post("/", async (req, res) => {
   const parsed = DecomposeRequestSchema.safeParse(req.body);
   if (!parsed.success) {
