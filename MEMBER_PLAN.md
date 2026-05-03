@@ -102,14 +102,44 @@
 |---|---|
 | **작업일** | 2일 (4/30 오후 ~ 5/2) |
 | **선행 조건** | Day 0에 Anthropic 키 발급, R1의 mock 응답 형태 확정 |
-| **검증** | curl로 호출 시 §4.4 통합 JSON 응답. 두 번째 호출이 첫 호출보다 빠르고 응답에 `cache_read_input_tokens` > 0 |
+| **검증** | Invoke-RestMethod로 호출 시 §4.4 통합 JSON 응답. 두 번째 호출이 첫 호출보다 빠르고 응답에 `cache_read_input_tokens` > 0 |
 | **PR 브랜치** | `feat/decompose-api` |
 
+**검증 상세**
+
+1. 터미널 A — 백엔드 dev 서버 기동:
+
+   ```powershell
+   npm run dev:backend
+   ```
+
+2. 터미널 B — POST `/api/decompose` 호출 후 응답을 `response.json`으로 저장:
+
+   ```powershell
+   $body = @{
+     title     = "직무 설정 보고서"
+     memo      = "직무를 설정해주세요. 직무 정의, 특성, 필요 역량과 스펙을 조사해서 작성해주세요. 분량 및 형식 제한 없습니다."
+     startDate = "2026-05-02"
+     dueDate   = "2026-05-03"
+   } | ConvertTo-Json
+   $bytes = [System.Text.Encoding]::UTF8.GetBytes($body)
+
+   $response = Invoke-RestMethod -Uri http://localhost:4000/api/decompose `
+     -Method Post `
+     -ContentType "application/json; charset=utf-8" `
+     -Body $bytes
+
+   $response | ConvertTo-Json -Depth 10 | Out-File -FilePath response.json -Encoding utf8
+   ```
+
+3. 생성된 `response.json` 내용 확인
+
 **산출물**:
-- [ ] `backend/src/prompts/decompose-system.ts` (시스템 프롬프트 + 6 신호 §4.2 + 3 규칙 §4.3 + JSON 스키마)
-- [ ] `backend/src/schemas/decompose.ts` (zod)
-- [ ] `backend/src/routes/decompose.ts` (POST 라우트, Anthropic SDK 호출, JSON 파싱 → zod parse)
-- [ ] `cache_control: { type: "ephemeral" }` 적용
+- [x] `backend/src/prompts/decompose-system.ts` (시스템 프롬프트 + 6 신호 §4.2 + 3 규칙 §4.3 + JSON 스키마)
+- [x] `backend/src/schemas/decompose.ts` (zod)
+- [x] `backend/src/routes/decompose.ts` (POST 라우트, Anthropic SDK 호출, JSON 파싱 → zod parse)
+- [x] `cache_control: { type: "ephemeral" }` 적용
+- [x] 의존성 추가: `@anthropic-ai/sdk": "^0.92.0"`
 
 ### R3. VALIDATE 2층 + 안정화 — **재은**
 
