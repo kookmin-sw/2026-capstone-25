@@ -46,7 +46,6 @@ create table public.steps (
   done boolean not null default false,
   time_spent integer not null default 0,
   boundary_signal text,
-  quality_flags text[] not null default '{}',
   constraint steps_order_idx_nonnegative check (order_idx >= 0),
   constraint steps_estimated_minutes_positive check (estimated_minutes is null or estimated_minutes > 0),
   constraint steps_time_spent_nonnegative check (time_spent >= 0)

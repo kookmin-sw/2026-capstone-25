@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { authMiddleware } from "../middleware/auth.js";
 import { supabase } from "../lib/supabase.js";
-import { CreateProjectSchema } from "../schemas/project.js";
+import { CreateProjectSchema, CreateStepSchema } from "../schemas/project.js";
 
 // 전체 탭에서 쓰는 프로젝트 API.
 // 프로젝트 생성, 목록 조회, 삭제를 담당한다.
@@ -174,7 +174,8 @@ router.post("/", async (req, res) => {
     return;
   }
 
-  const steps = input.steps.length > 0 ? input.steps : [{ title: input.goal, qualityFlags: [] }];
+  const steps: z.infer<typeof CreateStepSchema>[] =
+    input.steps.length > 0 ? input.steps : [{ title: input.goal }];
 
   const { error: stepsError } = await supabase.from("steps").insert(
     steps.map((step, index) => ({
@@ -185,7 +186,6 @@ router.post("/", async (req, res) => {
       guide: step.guide,
       estimated_minutes: step.estimatedMinutes,
       boundary_signal: step.boundarySignal,
-      quality_flags: step.qualityFlags,
     })),
   );
 

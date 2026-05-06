@@ -32,12 +32,10 @@ export function validate(steps: Step[]): ValidateResult {
     ...checkDecomposed(steps),
     ...checkDuplicateIds(steps),
   ];
-  // hadBlocker : blocker가 하나라도 있는지를 나타내는 boolean
   const hasBlocker = issues.some((i) => i.severity === "blocker");
   return { ok: !hasBlocker, issues, hasBlocker };
 }
 
-// (1) 분해 성공 검증 (최소 2단계)
 function checkDecomposed(steps: Step[]): ValidationIssue[] {
   if (steps.length >= MIN_STEPS) return [];
   return [{
@@ -47,11 +45,10 @@ function checkDecomposed(steps: Step[]): ValidationIssue[] {
   }];
 }
 
-// (2) 중복 id 검증
 function checkDuplicateIds(steps: Step[]): ValidationIssue[] {
-  const counts = new Map<string, number>();  // Map<id, count>
-  for (const s of steps) counts.set(s.id, (counts.get(s.id) ?? 0) + 1);  // 단계마다 id의 count 증가
-  const dups = [...counts.entries()].filter(([, n]) => n > 1).map(([id]) => id);  // 중복된 id만 추리기
+  const counts = new Map<string, number>();
+  for (const s of steps) counts.set(s.id, (counts.get(s.id) ?? 0) + 1);
+  const dups = [...counts.entries()].filter(([, n]) => n > 1).map(([id]) => id);
   if (dups.length === 0) return [];
   return [{
     code: "duplicate_id",
