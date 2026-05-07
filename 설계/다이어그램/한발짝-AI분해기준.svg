@@ -94,7 +94,7 @@
     <rect width="430" height="6" fill="#22A560" rx="3"/>
     <text x="20" y="42" font-size="18" font-weight="700" fill="#22A560">구체성 · Specificity</text>
     <text x="20" y="76" font-size="12" fill="#333">동사 + 구체 대상 + 가시 산출물을 모두 가진다.</text>
-    <text x="20" y="94" font-size="12" fill="#333">모호 동사 사전에 걸리면 자동 리라이트.</text>
+    <text x="20" y="94" font-size="12" fill="#333">모호 동사는 prompt 단계에서 자동 리라이트.</text>
     <text x="20" y="132" font-size="11" fill="#22A560" font-style="italic">"연구하기" → "핵심 논문 3편 초록·결론 정리"</text>
   </g>
 
@@ -102,17 +102,17 @@
     <rect width="430" height="160" rx="12" fill="#F3FAF5" stroke="#BCE5CD" filter="url(#sh)"/>
     <rect width="430" height="6" fill="#22A560" rx="3"/>
     <text x="20" y="42" font-size="18" font-weight="700" fill="#22A560">즉시성 · Immediacy</text>
-    <text x="20" y="76" font-size="12" fill="#333">지금 · 혼자 · 바로 시작 가능. 외부 대기 요소는</text>
-    <text x="20" y="94" font-size="12" fill="#333">'기다림' 태그로 분리해 실행 풀에서 제외한다.</text>
-    <text x="20" y="132" font-size="11" fill="#22A560" font-style="italic">피드백 대기 중이면 '기다림' 태그 부착</text>
+    <text x="20" y="76" font-size="12" fill="#333">지금 · 혼자 · 바로 시작 가능. 외부 대기는 별도 단계로</text>
+    <text x="20" y="94" font-size="12" fill="#333">만들지 않고, 사용자 액션 단계 description에 흡수한다.</text>
+    <text x="20" y="132" font-size="11" fill="#22A560" font-style="italic">"초안 송부 후 3일 답 없으면 재발송" 한 줄 포함</text>
   </g>
 
   <g transform="translate(930,600)">
     <rect width="430" height="160" rx="12" fill="#F3FAF5" stroke="#BCE5CD" filter="url(#sh)"/>
     <rect width="430" height="6" fill="#22A560" rx="3"/>
     <text x="20" y="42" font-size="18" font-weight="700" fill="#22A560">판정 가능성 · Verifiability</text>
-    <text x="20" y="76" font-size="12" fill="#333">완료 상태가 파일·메시지·제출·체크·수치 중</text>
-    <text x="20" y="94" font-size="12" fill="#333">하나로 관찰 가능. 주관 부사는 자동 리라이트.</text>
+    <text x="20" y="76" font-size="12" fill="#333">완료 상태가 파일·메시지·제출·체크·수치 중 하나로 관찰</text>
+    <text x="20" y="94" font-size="12" fill="#333">가능. 주관 부사는 prompt 단계에서 자동 리라이트.</text>
     <text x="20" y="132" font-size="11" fill="#22A560" font-style="italic">"충분히 공부" → "3장 연습문제 10개 풀기"</text>
   </g>
 

@@ -8,7 +8,6 @@ export const CreateStepSchema = z.object({
   guide: z.string().optional(),
   estimatedMinutes: z.number().int().positive().optional(),
   boundarySignal: z.string().optional(),
-  qualityFlags: z.array(z.string()).default([]),
 });
 
 export const CreateProjectSchema = z.object({

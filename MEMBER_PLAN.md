@@ -17,7 +17,7 @@
 | 5탭 셸 + 라우팅 + 헤더 | 완전 |
 | 홈 입력 (직접 입력) | 완전 |
 | 홈 입력 (템플릿) | 카탈로그 + 3개 하드코딩 |
-| AI 분해 백엔드 (DECOMPOSE) | 완전 + Prompt Cache + VALIDATE 2층 |
+| AI 분해 백엔드 (DECOMPOSE) | 완전 + Prompt Cache + VALIDATE(분해 성립·id 유일성) + 1차/2차 분해 라우트 |
 | 결과 4블록 UI | 완전 (Refine은 "더 잘게/더 크게" 두 버튼만) |
 | 확정 → DB 저장 | 완전 |
 | Supabase 인증 | 완전 (Email + Password) |
@@ -48,7 +48,7 @@
 |---|---|---|
 | AppShell · 라우팅 · 헤더 | **페어** | P1 |
 | 입력 화면 + 템플릿 카탈로그 | **재은** | R1, R5 |
-| AI 분해 백엔드 (프롬프트 + zod + VALIDATE) | **재은** | R2, R3 |
+| AI 분해 백엔드 (프롬프트 + zod + VALIDATE + 1차/2차 분해) | **재은** | R2, R3 |
 | 결과 4블록 UI | **재은** | R4 |
 | Supabase 스키마 + RLS | **지희** | J1 |
 | 인증 + 세션 가드 | **지희** | J2 |
@@ -141,20 +141,21 @@
 - [x] `cache_control: { type: "ephemeral" }` 적용
 - [x] 의존성 추가: `@anthropic-ai/sdk": "^0.92.0"`
 
-### R3. VALIDATE 2층 + 안정화 — **재은**
+### R3. VALIDATE + 안정화 — **재은**
 
 | 항목 | 내용 |
 |---|---|
 | **작업일** | 1.5일 (5/3 자율 ~ 5/4 오전) |
 | **선행 조건** | R2 완료 |
-| **검증** | "연구하기" 같은 모호 동사가 자동 리라이트됨. 의도적으로 깨진 응답 입력 시 1회 재시도 후 422 |
-| **PR 브랜치** | `feat/validate-2layer` |
+| **검증** | 단계 1개로 응답되면 `no_decomposition` blocker → 자동 재시도 후 통과. id 중복 시 `duplicate_id` blocker → 자동 재시도. zod 깨진 응답 2회 연속이면 422. 2차 분해(`/api/decompose/sub`)가 부모 step_id 강제 주입해 응답 |
+| **PR 브랜치** | `feat/validate` |
 
 **산출물**:
-- [ ] `backend/src/validate/boundary.ts` (의존 루프 검사 + 중복 검사 + 공백 검사)
-- [ ] `backend/src/validate/step.ts` (구체성·즉시성·판정가능성 검사 + 모호 동사 사전)
-- [ ] `backend/src/validate/rewrite.ts` (자동 리라이트 — 모호 동사 → 구체 표현)
-- [ ] DECOMPOSE 라우트에서 VALIDATE 통합 호출 + 실패 시 1회 재호출 + 422 처리
+- [x] `backend/src/validate/index.ts` (단일 검증 파일. `validate(steps) → { ok, issues, hasBlocker }`. checkDecomposed + checkDuplicateIds 두 개의 검사)
+- [x] `backend/src/schemas/decompose.ts`에 `SubDecomposeRequestSchema` 추가, `StepSchema`에서 `quality_flags` 제거
+- [x] `backend/src/prompts/decompose-system.ts`에 `# 분해 모드` 블록 추가(1차=phase, 2차=atomic), id 유일성·외부 대기 흡수 규칙 명시
+- [x] `routes/decompose.ts` 재작성 — `runDecompose` 공통 함수, `POST /` (1차) + `POST /sub` (2차), atomic 모드에서 `parent_step_id` 강제 주입, blocker 시 issue 추가하여 1회 재시도
+- [x] 응답 본문에 `validation: { ok, issues }` 블록 추가 (프론트 점진 도입 가능)
 
 ### R4. 결과 4블록 UI — **재은**
 
@@ -308,7 +309,7 @@
 | 2 | 4/30 목 | R1 마무리 → R2 시작 | J1 마무리 → J2 시작 |
 | 3 | 5/1 금 | R2 (시스템 프롬프트 + Anthropic 첫 호출) | J2 마무리 → J3 시작 (라우트) |
 | 4 | 5/2 토 (자율) | R2 (zod 검증, 실패 처리) | J3 (전체 탭 카드 그리드) |
-| 5 | 5/3 일 (자율) | R3 시작 (boundary, step 검증) | J3 (D-Day 그룹핑, 빈 상태) |
+| 5 | 5/3 일 (자율) | R3 시작 (validate 단일 파일 + 모드 분기) | J3 (D-Day 그룹핑, 빈 상태) |
 | 6 | 5/4 월 | R3 마무리 → R4 시작 | J3 마무리 (DELETE 라우트, 단일 카드) |
 | 7 | 5/5 화 (어린이날) | **휴식 권장** | **휴식 권장** |
 | 8 | 5/6 수 | R4 (4블록 컴포넌트 작성) | J4 시작 (상세 화면) |
@@ -397,7 +398,7 @@ grep -c "\[ \]" MEMBER_PLAN.md   # 미완 산출물 수
 | `backend/src/routes/` | ~5 | decompose, projects, steps, timer, me |
 | `backend/src/prompts/` | 1 | decompose-system |
 | `backend/src/schemas/` | ~3 | decompose, project, step |
-| `backend/src/validate/` | ~3 | boundary, step, rewrite |
+| `backend/src/validate/` | 1 | index.ts (분해 성립 + step id 유일성) |
 | `backend/src/middleware/` | 1 | auth |
 | `backend/src/lib/` | 1 | supabase |
 | `supabase/migrations/` | 2 | 001_initial.sql, 002_rls.sql |

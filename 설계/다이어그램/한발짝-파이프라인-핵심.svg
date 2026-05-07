@@ -53,11 +53,11 @@
     <rect width="200" height="180" rx="14" fill="#22A560" filter="url(#softShadow)"/>
     <text x="100" y="30" text-anchor="middle" font-size="11" fill="#D4EFDD" font-weight="600">③ STAGE</text>
     <text x="100" y="62" text-anchor="middle" font-size="18" font-weight="700" fill="#FFF">VALIDATE</text>
-    <text x="100" y="88" text-anchor="middle" font-size="11" fill="#E2F4E8">2층 검증</text>
-    <text x="100" y="116" text-anchor="middle" font-size="10" fill="#E2F4E8">1층 · 경계 품질</text>
-    <text x="100" y="134" text-anchor="middle" font-size="10" fill="#E2F4E8">2층 · 단계 품질 (3 규칙)</text>
-    <text x="100" y="152" text-anchor="middle" font-size="10" fill="#E2F4E8">모호·주관 리라이트</text>
-    <text x="100" y="170" text-anchor="middle" font-size="10" fill="#E2F4E8">실패 시 1회 재호출</text>
+    <text x="100" y="88" text-anchor="middle" font-size="11" fill="#E2F4E8">결정적 무결성 검사</text>
+    <text x="100" y="116" text-anchor="middle" font-size="10" fill="#E2F4E8">분해 성립 (≥2단계)</text>
+    <text x="100" y="134" text-anchor="middle" font-size="10" fill="#E2F4E8">step id 유일성</text>
+    <text x="100" y="152" text-anchor="middle" font-size="10" fill="#E2F4E8">의미 품질은 prompt 책임</text>
+    <text x="100" y="170" text-anchor="middle" font-size="10" fill="#E2F4E8">blocker 시 1회 자동 재시도</text>
   </g>
 
   <g transform="translate(870,160)">
@@ -99,7 +99,7 @@
     <text x="28" y="36" font-size="16" font-weight="700" fill="#FF6B3D">5단 설계의 핵심</text>
     <text x="28" y="62" font-size="13" fill="#444">  주황(①): INTAKE — 파일 텍스트 추출과 형식 가드레일. AI 호출 없음.</text>
     <text x="28" y="82" font-size="13" fill="#444">  보라(②): DECOMPOSE — Claude Haiku 4.5 단일 호출로 분석(유형·목표·현재 phase·제약)과 분해(6 신호 경계 + 3 규칙 기술)를 함께 산출</text>
-    <text x="28" y="102" font-size="13" fill="#444">  초록(③④): VALIDATE · PRESENT — 2층 검증으로 경계·단계 품질을 보강, 단계별 가이드라인을 생성해 4블록으로 포장</text>
+    <text x="28" y="102" font-size="13" fill="#444">  초록(③④): VALIDATE · PRESENT — 분해 성립과 step id 유일성을 결정적으로 검증, 단계별 가이드라인을 생성해 4블록으로 포장</text>
     <text x="28" y="122" font-size="13" fill="#444">  노랑(⑤): REFINE — 재분해·2차 쪼개기·직접 수정이 이 단계로 들어와 DECOMPOSE로 재진입, 동일 접두부 캐시 재사용</text>
     <text x="28" y="158" font-size="12" fill="#888" font-style="italic">설계 원칙: 모든 할 일은 규모 분기 없이 동일 5단 파이프라인을 통과한다. 단계 크기는 맥락 기반 의미 분할의 결과이지 파이프라인의 제약이 아니다.</text>
     <text x="28" y="178" font-size="12" fill="#888" font-style="italic">이해와 분해를 분리하지 않는다 — 한 번의 호출이 프로젝트를 이해하면서 동시에 그 이해를 경계 결정에 반영한다.</text>

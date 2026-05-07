@@ -14,6 +14,19 @@ export const DecomposeRequestSchema = z.object({
 
 export type DecomposeRequest = z.infer<typeof DecomposeRequestSchema>;
 
+// 2차 분해 요청 — 부모 단계 하나를 분해한다.
+export const SubDecomposeRequestSchema = z.object({
+  parent: z.object({
+    step_id: z.string().min(1),
+    step_title: z.string().min(1),
+    step_description: z.string(),
+    parent_goal: z.string().min(1),
+  }),
+  memo: z.string().max(5000).optional(),
+});
+
+export type SubDecomposeRequest = z.infer<typeof SubDecomposeRequestSchema>;
+
 export const BoundarySignalSchema = z.enum([
   "phase",
   "artifact",
@@ -33,7 +46,6 @@ export const StepSchema = z.object({
   unblocker: z.string(),
   estimated_minutes: z.number().int().nonnegative(),
   boundary_signal: BoundarySignalSchema,
-  quality_flags: z.array(z.string()),
   done: z.boolean(),
   time_spent: z.number().nonnegative(),
 });
