@@ -229,6 +229,10 @@
 - [x] `frontend/src/App.tsx` (`/login` 라우트 + 보호 라우트 연결)
 - [x] `backend/src/index.ts` (`/api/me` 라우트 연결)
 
+**J2 후속 개선** (`feat/auth-improvements` PR):
+- [x] `pages/LoginPage.tsx` — 비밀번호 보기/숨기기 토글, 회원가입 비밀번호 재확인, 에러 메시지 한글화, 이메일 trim/lowercase 정규화, autocomplete 속성, role=alert 접근성 보강, 한국어 주석 추가
+- [x] `pages/MePage.tsx` — 로그아웃 버튼 추가 (기존 placeholder를 별도 파일로 분리)
+
 ### J3. 프로젝트 라우트 + 전체 탭 목록 — **지희**
 
 | 항목 | 내용 |
@@ -259,11 +263,14 @@
 | **PR 브랜치** | `feat/project-detail` |
 
 **산출물**:
-- [ ] `pages/ProjectDetailPage.tsx` (상세 모드)
-- [ ] `components/detail/ProgressCard.tsx` (% 바 + 완료/전체)
-- [ ] `components/detail/StepRow.tsx` (단계 카드 — 접힘/펼침, 번호 뱃지, 다음 단계 강조)
-- [ ] 헤더 ← 뒤로가기 + 프로젝트명 + D-Day
-- [ ] 하단 액션 (수정·삭제·목록으로)
+- [x] `pages/ProjectDetailPage.tsx` (상세 모드)
+- [x] `components/detail/ProgressCard.tsx` (% 바 + 완료/전체)
+- [x] `components/detail/StepRow.tsx` (단계 카드 — 접힘/펼침, 번호 뱃지, 다음 단계 강조)
+- [x] 헤더 ← 뒤로가기 + 프로젝트명 + D-Day
+- [x] 하단 액션 (수정·삭제·목록으로)
+
+**J4 추가 산출물**:
+- [x] `backend/src/routes/projects.ts`에 `GET /api/projects/:id` 추가 — 상세 페이지에서 단계 가이드 포함 전체 데이터를 불러오기 위해 필요. 기존 목록 API(`GET /api/projects`)는 요약 정보만 반환하므로 별도 엔드포인트 추가.
 
 ### J5. 단계 체크 + 진행률 — **지희**
 
