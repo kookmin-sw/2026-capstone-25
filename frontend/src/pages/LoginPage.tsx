@@ -78,7 +78,7 @@ export default function LoginPage() {
     }
 
     // 이메일 인증이 켜져 있으면 session이 null — 인증 메일 확인 안내
-    setMessage("회원가입을 바로 완료하지 못했어요. 잠시 뒤 다시 시도해 주세요.");
+    setMessage("가입 확인 메일을 보냈어요. 메일함을 확인하고 링크를 클릭해주세요.");
   }
 
   if (isSignedIn) {
@@ -108,7 +108,11 @@ export default function LoginPage() {
               setMode("sign-in");
               setMessage("");
               setStatus("idle");
+              setEmail("");
+              setPassword("");
               setConfirmPassword("");
+              setShowPassword(false);
+              setShowConfirmPassword(false);
             }}
             className={[
               "rounded-lg py-2 text-sm font-black",
@@ -123,7 +127,11 @@ export default function LoginPage() {
               setMode("sign-up");
               setMessage("");
               setStatus("idle");
+              setEmail("");
+              setPassword("");
               setConfirmPassword("");
+              setShowPassword(false);
+              setShowConfirmPassword(false);
             }}
             className={[
               "rounded-lg py-2 text-sm font-black",
@@ -161,16 +169,23 @@ export default function LoginPage() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 placeholder="6자 이상"
-                className="w-full rounded-xl border border-bd bg-white px-4 py-3 pr-11 text-sm outline-none focus:border-ac"
+                // [ms-reveal]:hidden — Edge 기본 비밀번호 보기 버튼 숨김
+                className={[
+                  "w-full rounded-xl border border-bd bg-white px-4 py-3 text-sm outline-none focus:border-ac [&::-ms-reveal]:hidden [&::-ms-clear]:hidden",
+                  password ? "pr-11" : "",
+                ].join(" ")}
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-mu hover:text-tx"
-                aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+              {/* 입력값이 있을 때만 토글 버튼 표시 */}
+              {password && (
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-mu hover:text-tx"
+                  aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              )}
             </div>
           </label>
 
@@ -187,16 +202,21 @@ export default function LoginPage() {
                   value={confirmPassword}
                   onChange={(event) => setConfirmPassword(event.target.value)}
                   placeholder="비밀번호를 다시 입력해주세요"
-                  className="w-full rounded-xl border border-bd bg-white px-4 py-3 pr-11 text-sm outline-none focus:border-ac"
+                  className={[
+                    "w-full rounded-xl border border-bd bg-white px-4 py-3 text-sm outline-none focus:border-ac [&::-ms-reveal]:hidden [&::-ms-clear]:hidden",
+                    confirmPassword ? "pr-11" : "",
+                  ].join(" ")}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword((prev) => !prev)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-mu hover:text-tx"
-                  aria-label={showConfirmPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
-                >
-                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
+                {confirmPassword && (
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-mu hover:text-tx"
+                    aria-label={showConfirmPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
+                  >
+                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                )}
               </div>
             </label>
           )}
