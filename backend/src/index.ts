@@ -6,6 +6,7 @@ import meRouter from "./routes/me.js";
 import projectsRouter from "./routes/projects.js";
 import decomposeRouter from "./routes/decompose.js";
 import stepsRouter from "./routes/steps.js";
+import timerRouter from "./routes/timer.js";
 
 // 시스템 아키텍처: Express 서버, localhost:4000
 // 프론트(localhost:5173)에서 /api/* 로 호출 → 여기서 처리
@@ -26,6 +27,7 @@ app.use("/api/me", meRouter);
 app.use("/api/projects", projectsRouter);
 app.use("/api/decompose", decomposeRouter);
 app.use("/api/steps", stepsRouter);
+app.use("/api", timerRouter);
 
 app.listen(env.PORT, () => {
   console.log(`[hanbaljjak-backend] listening on http://localhost:${env.PORT}`);

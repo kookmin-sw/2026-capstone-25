@@ -1,6 +1,8 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Home, Calendar, ClipboardList, Timer, User, type LucideIcon } from "lucide-react";
 import Header from "./Header";
+import { getTodayMinutes } from "../services/timer";
 
 type Tab = { to: string; label: string; icon: LucideIcon; end?: boolean };
 
@@ -35,6 +37,14 @@ function bottomNavItemClass(isActive: boolean) {
 }
 
 export default function AppShell() {
+  const location = useLocation();
+  const [todayMinutes, setTodayMinutes] = useState(0);
+
+  // 라우트가 바뀔 때마다 오늘 집중 시간을 새로 조회한다 (타이머 완료 후 복귀 시 갱신)
+  useEffect(() => {
+    getTodayMinutes().then(setTodayMinutes).catch(() => {});
+  }, [location.pathname]);
+
   return (
     // 프로토타입의 #phone — 모바일은 column, 데스크탑(≥1024px)은 row.
     // 페이지 콘텐츠 배경은 body(index.css)에서 책임지므로 shell 에서는 지정하지 않는다.
@@ -66,7 +76,7 @@ export default function AppShell() {
       {/* ── 메인 컬럼 — 헤더 + 페이지 콘텐츠 ──
        * pb 는 모바일에서 fixed 네비에 가려지지 않도록 네비 높이만큼 비워둔다. */}
       <div className="flex-1 flex flex-col min-h-screen lg:h-screen lg:min-h-0 lg:overflow-hidden pb-[calc(80px+env(safe-area-inset-bottom))] lg:pb-0">
-        <Header />
+        <Header todayMinutes={todayMinutes} />
         <main className="flex-1 lg:overflow-auto">
           <Outlet />
         </main>

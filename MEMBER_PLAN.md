@@ -298,11 +298,20 @@
 | **PR 브랜치** | `feat/timer` |
 
 **산출물**:
-- [ ] `pages/TimerPage.tsx` (시간 설정 화면 + 카운트다운)
-- [ ] `components/timer/CountdownRing.tsx` (원형 SVG 프로그레스)
-- [ ] `backend/src/routes/timer.ts` (POST /api/steps/:id/time — time_spent 누적)
-- [ ] 종료 시 단계의 `time_spent` UPDATE
-- [ ] `Header.tsx`에 "오늘 N분" 실시간 — 컴포넌트 마운트 시 GET /api/me/today-minutes (오늘 모든 단계 time_spent 합산)
+- [x] `pages/TimerPage.tsx` (시간 설정 화면 + 카운트다운)
+- [x] `components/timer/CountdownRing.tsx` (원형 SVG 프로그레스)
+- [x] `backend/src/routes/timer.ts` (POST /api/steps/:id/time — time_spent 누적)
+- [x] 종료 시 단계의 `time_spent` UPDATE
+- [x] `Header.tsx`에 "오늘 N분" 실시간 — 컴포넌트 마운트 시 GET /api/me/today-minutes (오늘 모든 단계 time_spent 합산)
+
+**J6 추가 산출물**:
+- [x] `backend/src/routes/me.ts`에 `GET /api/me/today-minutes` 추가
+- [x] `frontend/src/services/timer.ts` (API 호출 함수 — postTimeSpent, getTodayMinutes)
+- [x] `AppShell.tsx` — 라우트 변경 시 오늘 N분 재조회 후 Header에 전달
+- [x] `StepRow.tsx` — "시작" 버튼 → `/timer/:stepId` 이동 연결
+- [x] `ProjectCard.tsx` — 카드 전체 클릭 상세 이동, 다음 할 일 영역 클릭 타이머 이동, ChevronRight 복원, 삭제 버튼 제거(상세에서만 삭제)
+- [x] `AllPage.tsx` — D-Day 뱃지 색상 앱 톤에 맞게 개선
+- [x] `index.css` — 타이머 슬라이더 커스텀 스타일 추가
 
 **지희 합계**: 0.5(P1) + 1(J1) + 1.5(J2) + 2.5(J3) + 1.5(J4) + 1(J5) + 1.5(J6) = **9.5일**
 

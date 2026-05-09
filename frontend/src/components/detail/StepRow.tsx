@@ -1,6 +1,8 @@
 // 단계 카드 — 번호 뱃지, 접힘/펼침, 다음 단계 강조, 가이드 텍스트를 표시한다.
 // onToggle: 완료 체크 클릭 시 부모(ProjectDetailPage)가 낙관적 UI 갱신 후 PATCH 호출.
+// 시작 버튼: /timer/:stepId 로 이동해 타이머를 시작한다.
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
 import type { StepDetail } from "../../services/projects";
 
@@ -15,6 +17,7 @@ type Props = {
 export default function StepRow({ step, index, isNext, color, onToggle }: Props) {
   // 다음 단계는 기본으로 펼쳐진 상태로 시작
   const [expanded, setExpanded] = useState(isNext);
+  const navigate = useNavigate();
   const accentColor = color ?? "var(--color-ac)";
 
   const badgeBg = isNext ? "var(--color-ac)" : `${accentColor}22`;
@@ -71,11 +74,12 @@ export default function StepRow({ step, index, isNext, color, onToggle }: Props)
             </p>
           )}
           <div className="flex items-center justify-end gap-2">
-            {/* 시작 버튼 — J6에서 타이머 라우트와 연결 */}
+            {/* 시작 버튼 — 클릭 시 타이머 페이지로 이동 */}
             {!step.done && (
               <button
                 type="button"
-                className="bg-fa text-tx2 border border-bd rounded-xl px-3 py-1.5 text-xs font-black"
+                onClick={(e) => { e.stopPropagation(); navigate(`/timer/${step.id}`); }}
+                className="bg-fa text-tx2 border border-bd rounded-xl px-3 py-1.5 text-xs font-black hover:bg-ac-s hover:text-ac-d hover:border-ac transition-colors"
               >
                 시작
               </button>

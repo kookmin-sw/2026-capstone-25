@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Outlet, Routes, Route } from "react-router-dom";
 import AppShell from "./components/AppShell";
 import SessionGuard from "./components/SessionGuard";
 import HomePage from "./pages/HomePage";
@@ -6,6 +6,7 @@ import AllPage from "./pages/AllPage";
 import LoginPage from "./pages/LoginPage";
 import MePage from "./pages/MePage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
+import TimerPage from "./pages/TimerPage";
 
 // 각 탭의 placeholder
 function CalendarPage() {
@@ -20,6 +21,10 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        {/* 타이머 — 헤더/네비 없는 풀스크린. SessionGuard만 적용 */}
+        <Route element={<SessionGuard><Outlet /></SessionGuard>}>
+          <Route path="/timer/:stepId" element={<TimerPage />} />
+        </Route>
         <Route
           element={
             <SessionGuard>
