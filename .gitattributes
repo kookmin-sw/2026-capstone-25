@@ -1,0 +1,13 @@
+# 줄바꿈 통일 (Mac·Linux·Windows 팀 섞일 때 충돌 방지)
+* text=auto eol=lf
+
+# 바이너리 명시 (Git LFS 안 써도 안전하게 처리)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.pdf binary
+*.pptx binary
+*.docx binary
+*.xlsx binary

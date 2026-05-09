@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 560" font-family="'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif">
+
+  <!-- background -->
+  <rect width="1400" height="560" fill="#F3F0E2"/>
+
+  <!-- ================= 입력 (LEFT) ================= -->
+  <g>
+    <text x="80" y="62" font-size="18" font-weight="800" fill="#005E47" letter-spacing="2">INPUT</text>
+
+    <rect x="80" y="100" width="260" height="340" rx="22" fill="#FAF9F4" stroke="#181818" stroke-width="2.5"/>
+
+    <!-- 목표 한 줄 -->
+    <rect x="104" y="132" width="212" height="96" rx="12" fill="#FFD43A" stroke="#181818" stroke-width="2"/>
+    <text x="210" y="170" font-size="22" font-weight="800" fill="#181818" text-anchor="middle">사용자 입력</text>
+    <text x="210" y="202" font-size="13" fill="#5a5a5a" text-anchor="middle">(필수)</text>
+
+    <text x="210" y="258" font-size="14" fill="#888" text-anchor="middle">+ 선택</text>
+
+    <!-- 파일 -->
+    <rect x="104" y="272" width="212" height="64" rx="10" fill="#FAF9F4" stroke="#181818" stroke-width="1.5" stroke-dasharray="4 4"/>
+    <text x="210" y="312" font-size="17" font-weight="700" fill="#181818" text-anchor="middle">📎 파일</text>
+
+    <!-- 템플릿 -->
+    <rect x="104" y="348" width="212" height="64" rx="10" fill="#FAF9F4" stroke="#181818" stroke-width="1.5" stroke-dasharray="4 4"/>
+    <text x="210" y="388" font-size="17" font-weight="700" fill="#181818" text-anchor="middle">🗂 템플릿</text>
+  </g>
+
+  <!-- arrow input -> pipeline -->
+  <path d="M 348 270 L 408 270" stroke="#181818" stroke-width="2.5" fill="none"/>
+  <polygon points="408,262 422,270 408,278" fill="#181818"/>
+
+  <!-- ================= 서버 5단 (MIDDLE) ================= -->
+  <g>
+    <text x="438" y="62" font-size="18" font-weight="800" fill="#005E47" letter-spacing="2">SERVER</text>
+
+    <g>
+      <rect x="438" y="140" width="200" height="48" rx="8" fill="#FFB940" stroke="#181818" stroke-width="2"/>
+      <text x="538" y="171" font-size="17" font-weight="700" fill="#181818" text-anchor="middle">① INPUT</text>
+
+      <rect x="438" y="196" width="200" height="48" rx="8" fill="#B89AE0" stroke="#181818" stroke-width="2"/>
+      <text x="538" y="227" font-size="17" font-weight="700" fill="#181818" text-anchor="middle">② DECOMPOSE</text>
+
+      <rect x="438" y="252" width="200" height="48" rx="8" fill="#7ED1A8" stroke="#181818" stroke-width="2"/>
+      <text x="538" y="283" font-size="17" font-weight="700" fill="#181818" text-anchor="middle">③ VALIDATE</text>
+
+      <rect x="438" y="308" width="200" height="48" rx="8" fill="#7ED1A8" stroke="#181818" stroke-width="2"/>
+      <text x="538" y="339" font-size="17" font-weight="700" fill="#181818" text-anchor="middle">④ PRESENT</text>
+
+      <rect x="438" y="364" width="200" height="48" rx="8" fill="#FFE066" stroke="#181818" stroke-width="2"/>
+      <text x="538" y="395" font-size="17" font-weight="700" fill="#181818" text-anchor="middle">⑤ REFINE</text>
+    </g>
+  </g>
+
+  <!-- arrow pipeline -> response -->
+  <path d="M 648 270 L 708 270" stroke="#181818" stroke-width="2.5" fill="none"/>
+  <polygon points="708,262 722,270 708,278" fill="#181818"/>
+
+  <!-- ================= 4블록 응답 (RIGHT) ================= -->
+  <g>
+    <text x="738" y="62" font-size="18" font-weight="800" fill="#005E47" letter-spacing="2">OUTPUT</text>
+
+    <!-- ① 결과 -->
+    <g>
+      <rect x="738" y="100" width="280" height="150" rx="14" fill="#FAF9F4" stroke="#181818" stroke-width="2"/>
+      <rect x="738" y="100" width="280" height="38" rx="14" fill="#B89AE0" stroke="#181818" stroke-width="2"/>
+      <text x="878" y="126" font-size="16" font-weight="800" fill="#181818" text-anchor="middle">① 결과</text>
+      <text x="878" y="180" font-size="18" font-weight="700" fill="#181818" text-anchor="middle">단계 리스트</text>
+      <text x="878" y="212" font-size="14" fill="#5a5a5a" text-anchor="middle">번호 · 제목 · 예상 시간</text>
+      <text x="878" y="234" font-size="14" fill="#5a5a5a" text-anchor="middle">+ 가이드라인</text>
+    </g>
+
+    <!-- ② AI 추론 -->
+    <g>
+      <rect x="1038" y="100" width="280" height="150" rx="14" fill="#FAF9F4" stroke="#181818" stroke-width="2"/>
+      <rect x="1038" y="100" width="280" height="38" rx="14" fill="#7ED1A8" stroke="#181818" stroke-width="2"/>
+      <text x="1178" y="126" font-size="16" font-weight="800" fill="#181818" text-anchor="middle">② AI 추론</text>
+      <text x="1178" y="180" font-size="18" font-weight="700" fill="#181818" text-anchor="middle">what / how 카드</text>
+      <text x="1178" y="212" font-size="14" fill="#5a5a5a" text-anchor="middle">이해한 내용 · 분해 근거</text>
+    </g>
+
+    <!-- ③ 재분해 -->
+    <g>
+      <rect x="738" y="282" width="280" height="150" rx="14" fill="#FAF9F4" stroke="#181818" stroke-width="2"/>
+      <rect x="738" y="282" width="280" height="38" rx="14" fill="#FFE066" stroke="#181818" stroke-width="2"/>
+      <text x="878" y="308" font-size="16" font-weight="800" fill="#181818" text-anchor="middle">③ 재분해</text>
+      <text x="878" y="362" font-size="18" font-weight="700" fill="#181818" text-anchor="middle"> 사용자 맞춤 재분해 / 2차 분해</text>
+    </g>
+
+    <!-- ④ 확정/수정 -->
+    <g>
+      <rect x="1038" y="282" width="280" height="150" rx="14" fill="#FAF9F4" stroke="#181818" stroke-width="2"/>
+      <rect x="1038" y="282" width="280" height="38" rx="14" fill="#FFB940" stroke="#181818" stroke-width="2"/>
+      <text x="1178" y="308" font-size="16" font-weight="800" fill="#181818" text-anchor="middle">④ 확정 / 수정</text>
+      <text x="1178" y="362" font-size="18" font-weight="700" fill="#181818" text-anchor="middle">결과 확정 또는 직접 수정 </text>
+    </g>
+
+    <!-- refine loop: ③ 재분해 -> back to ⑤ REFINE -->
+    <path d="M 878 444 Q 878 490 650 490 Q 540 490 540 424"
+          stroke="#FF6B3D" stroke-width="2" stroke-dasharray="6 5" fill="none"/>
+    <polygon points="532,428 540,412 548,428" fill="#FF6B3D"/>
+    <text x="705" y="484" font-size="12" font-weight="700" fill="#FF6B3D" text-anchor="middle">REFINE 루프</text>
+  </g>
+
+</svg>

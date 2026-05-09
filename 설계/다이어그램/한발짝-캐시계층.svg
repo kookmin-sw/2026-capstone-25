@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 780" font-family="'맑은 고딕', 'Malgun Gothic', sans-serif">
+  <defs>
+    <filter id="sh2" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.1"/>
+    </filter>
+  </defs>
+  <rect width="1400" height="780" fill="#FAFAFC"/>
+
+  <text x="60" y="50" font-size="28" font-weight="700" fill="#222">캐시 계층 — 3층 저장 전략</text>
+  <text x="60" y="78" font-size="15" fill="#666">브라우저·Supabase·Anthropic Prompt Cache가 각기 다른 TTL과 목적을 가진다. 통합 설계에서 모든 호출이 동일 접두부를 공유해 적중률이 높다.</text>
+  <rect x="60" y="90" width="80" height="4" fill="#FF6B3D" rx="2"/>
+
+  <g transform="translate(40,130)">
+    <rect width="420" height="560" rx="16" fill="#FFF" stroke="#FFD1BC" stroke-width="2" filter="url(#sh2)"/>
+    <rect width="420" height="56" rx="16" fill="#FF6B3D"/>
+    <rect y="45" width="420" height="11" fill="#FF6B3D"/>
+    <text x="24" y="36" font-size="18" font-weight="700" fill="#FFF">① 브라우저 · 세션 캐시</text>
+    <text x="24" y="86" font-size="12" font-weight="700" fill="#B0451F">위치</text>
+    <text x="24" y="104" font-size="12" fill="#444">React 상태 + sessionStorage</text>
+    <text x="24" y="136" font-size="12" font-weight="700" fill="#B0451F">TTL</text>
+    <text x="24" y="154" font-size="12" fill="#444">탭 세션 동안 (명시적 닫기 시 소멸)</text>
+    <text x="24" y="186" font-size="12" font-weight="700" fill="#B0451F">저장 대상</text>
+    <text x="24" y="206" font-size="11" fill="#444">• 최근 분해 결과 전체 트리</text>
+    <text x="24" y="224" font-size="11" fill="#444">• 확장된 단계 id 집합</text>
+    <text x="24" y="242" font-size="11" fill="#444">• 편집 중 문구 드래프트</text>
+    <text x="24" y="260" font-size="11" fill="#444">• 캘린더 드래그 상태</text>
+    <text x="24" y="294" font-size="12" font-weight="700" fill="#B0451F">적중 시 효과</text>
+    <text x="24" y="314" font-size="11" fill="#444">페이지 왕복·뒤로가기에서 즉시 복원.</text>
+    <text x="24" y="332" font-size="11" fill="#444">네트워크 호출 0회.</text>
+    <text x="24" y="366" font-size="12" font-weight="700" fill="#B0451F">무효화 조건</text>
+    <text x="24" y="386" font-size="11" fill="#444">• 확정 버튼 → DB로 승격 후 삭제</text>
+    <text x="24" y="404" font-size="11" fill="#444">• 새 입력 제출 → 교체</text>
+    <text x="24" y="422" font-size="11" fill="#444">• 로그아웃 → 소멸</text>
+    <text x="24" y="456" font-size="12" font-weight="700" fill="#B0451F">역할</text>
+    <text x="24" y="476" font-size="11" fill="#444">UX 연속성 · 오프라인 복원</text>
+    <rect x="24" y="500" width="372" height="40" rx="6" fill="#FFF4EE"/>
+    <text x="36" y="516" font-size="10" fill="#8A4726" font-style="italic">예) 결과 화면에서 캘린더로 갔다 돌아와도</text>
+    <text x="36" y="530" font-size="10" fill="#8A4726" font-style="italic">펼친 단계 상태와 편집 중 문구 유지.</text>
+  </g>
+
+  <g transform="translate(490,130)">
+    <rect width="420" height="560" rx="16" fill="#FFF" stroke="#BCE5CD" stroke-width="2" filter="url(#sh2)"/>
+    <rect width="420" height="56" rx="16" fill="#22A560"/>
+    <rect y="45" width="420" height="11" fill="#22A560"/>
+    <text x="24" y="36" font-size="18" font-weight="700" fill="#FFF">② Supabase · 영구 저장</text>
+    <text x="24" y="86" font-size="12" font-weight="700" fill="#1E7D48">위치</text>
+    <text x="24" y="104" font-size="12" fill="#444">PostgreSQL + RLS(행 수준 보안)</text>
+    <text x="24" y="136" font-size="12" font-weight="700" fill="#1E7D48">TTL</text>
+    <text x="24" y="154" font-size="12" fill="#444">사용자 삭제 전까지 영구</text>
+    <text x="24" y="186" font-size="12" font-weight="700" fill="#1E7D48">저장 대상</text>
+    <text x="24" y="206" font-size="11" fill="#444">• projects (raw_input · 분석 결과)</text>
+    <text x="24" y="224" font-size="11" fill="#444">• steps (parent_step_id 트리)</text>
+    <text x="24" y="242" font-size="11" fill="#444">• decompositions (차수 · 버전 로그)</text>
+    <text x="24" y="260" font-size="11" fill="#444">• reasoning_logs (analysis·신호 사용)</text>
+    <text x="24" y="278" font-size="11" fill="#444">• schedule_assignments (캘린더)</text>
+    <text x="24" y="312" font-size="12" font-weight="700" fill="#1E7D48">적중 시 효과</text>
+    <text x="24" y="332" font-size="11" fill="#444">재접속·다른 기기에서 같은 분해 복원.</text>
+    <text x="24" y="350" font-size="11" fill="#444">REFINE 계보 추적 가능.</text>
+    <text x="24" y="384" font-size="12" font-weight="700" fill="#1E7D48">무효화 조건</text>
+    <text x="24" y="404" font-size="11" fill="#444">• 사용자 명시적 삭제</text>
+    <text x="24" y="422" font-size="11" fill="#444">• 확정 버튼은 덮어쓰기가 아닌 새 버전</text>
+    <text x="24" y="456" font-size="12" font-weight="700" fill="#1E7D48">역할</text>
+    <text x="24" y="476" font-size="11" fill="#444">사용자 고유 데이터의 단일 진실 원본</text>
+    <rect x="24" y="500" width="372" height="40" rx="6" fill="#F3FAF5"/>
+    <text x="36" y="516" font-size="10" fill="#2A8C54" font-style="italic">예) 분석 결과와 단계 트리가 저장되어,</text>
+    <text x="36" y="530" font-size="10" fill="#2A8C54" font-style="italic">며칠 뒤 같은 프로젝트 REFINE 에서 재사용.</text>
+  </g>
+
+  <g transform="translate(940,130)">
+    <rect width="420" height="560" rx="16" fill="#FFF" stroke="#D9CEF6" stroke-width="2" filter="url(#sh2)"/>
+    <rect width="420" height="56" rx="16" fill="#8B5CF6"/>
+    <rect y="45" width="420" height="11" fill="#8B5CF6"/>
+    <text x="24" y="36" font-size="18" font-weight="700" fill="#FFF">③ Anthropic Prompt Cache</text>
+    <text x="24" y="86" font-size="12" font-weight="700" fill="#5E3BBF">위치</text>
+    <text x="24" y="104" font-size="12" fill="#444">Anthropic API (ephemeral 캐시)</text>
+    <text x="24" y="136" font-size="12" font-weight="700" fill="#5E3BBF">TTL</text>
+    <text x="24" y="154" font-size="12" fill="#444">5 분 (마지막 적중 시 갱신)</text>
+    <text x="24" y="186" font-size="12" font-weight="700" fill="#5E3BBF">저장 대상 (캐시 지시된 블록)</text>
+    <text x="24" y="206" font-size="11" fill="#444">• 시스템 프롬프트 상수부</text>
+    <text x="24" y="224" font-size="11" fill="#444">• 6 신호·3 규칙 분해 원칙</text>
+    <text x="24" y="242" font-size="11" fill="#444">• 출력 JSON 스키마 명세</text>
+    <text x="24" y="260" font-size="11" fill="#444">• 분석·분해 통합 지시문</text>
+    <text x="24" y="278" font-size="11" fill="#888" font-style="italic">(모든 호출이 동일 접두부를 공유)</text>
+    <text x="24" y="312" font-size="12" font-weight="700" fill="#5E3BBF">적중 시 효과</text>
+    <text x="24" y="332" font-size="11" fill="#444">입력 토큰 비용 90% 할인 · TTFB 단축.</text>
+    <text x="24" y="350" font-size="11" fill="#444">REFINE · 재호출이 특히 큰 이득.</text>
+    <text x="24" y="384" font-size="12" font-weight="700" fill="#5E3BBF">무효화 조건</text>
+    <text x="24" y="404" font-size="11" fill="#444">• 5분 무호출</text>
+    <text x="24" y="422" font-size="11" fill="#444">• 캐시 블록 텍스트 변경 (1문자만 바뀌어도)</text>
+    <text x="24" y="456" font-size="12" font-weight="700" fill="#5E3BBF">역할</text>
+    <text x="24" y="476" font-size="11" fill="#444">반복 호출의 비용·지연 절감</text>
+    <rect x="24" y="500" width="372" height="40" rx="6" fill="#F7F2FF"/>
+    <text x="36" y="516" font-size="10" fill="#5E3BBF" font-style="italic">예) 접두부가 유형 독립적이어서 모든 사용자의</text>
+    <text x="36" y="530" font-size="10" fill="#5E3BBF" font-style="italic">모든 호출이 동일 키로 수렴 → 적중률 극대화.</text>
+  </g>
+
+  <g transform="translate(40,710)">
+    <rect width="1320" height="50" rx="8" fill="#1F1F1F"/>
+    <text x="20" y="22" font-size="12" font-weight="700" fill="#FFC043">세 계층의 역할 분리</text>
+    <text x="20" y="40" font-size="11" fill="#FFF">브라우저는 "지금 보고 있는 것", Supabase는 "내 것", Anthropic Prompt Cache는 "모두가 공유하는 분해 원칙". 통합 설계라 접두부 파편화가 없어 ③ 적중률이 높다.</text>
+  </g>
+</svg>
