@@ -1,5 +1,5 @@
 // 단계 카드 — 번호 뱃지, 접힘/펼침, 다음 단계 강조, 가이드 텍스트를 표시한다.
-// 체크박스 클릭(done 토글)은 J5에서 PATCH /api/steps/:id 와 연결한다.
+// onToggle: 완료 체크 클릭 시 부모(ProjectDetailPage)가 낙관적 UI 갱신 후 PATCH 호출.
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import type { StepDetail } from "../../services/projects";
@@ -9,9 +9,10 @@ type Props = {
   index: number;
   isNext: boolean;
   color: string | null;
+  onToggle: (id: string, done: boolean) => void;
 };
 
-export default function StepRow({ step, index, isNext, color }: Props) {
+export default function StepRow({ step, index, isNext, color, onToggle }: Props) {
   // 다음 단계는 기본으로 펼쳐진 상태로 시작
   const [expanded, setExpanded] = useState(isNext);
   const accentColor = color ?? "var(--color-ac)";
@@ -19,11 +20,7 @@ export default function StepRow({ step, index, isNext, color }: Props) {
   const badgeBg = isNext ? "var(--color-ac)" : `${accentColor}22`;
   const badgeColor = isNext ? "#fff" : accentColor;
 
-  function statusText() {
-    if (step.done) return "완료";
-    if (step.estimatedMinutes) return `약 ${step.estimatedMinutes}분`;
-    return "";
-  }
+  const statusLabel = step.done ? "완료" : step.estimatedMinutes ? `약 ${step.estimatedMinutes}분` : "";
 
   return (
     <div className="bg-sf border border-bd2 rounded-2xl px-4 py-3.5 shadow-sm">
@@ -47,8 +44,8 @@ export default function StepRow({ step, index, isNext, color }: Props) {
           >
             {step.title}
           </p>
-          {statusText() && (
-            <p className="text-[11px] text-mu mt-0.5">{statusText()}</p>
+          {statusLabel && (
+            <p className="text-[11px] text-mu mt-0.5">{statusLabel}</p>
           )}
         </div>
         <button
@@ -83,9 +80,10 @@ export default function StepRow({ step, index, isNext, color }: Props) {
                 시작
               </button>
             )}
-            {/* 완료 체크 버튼 — J5에서 PATCH /api/steps/:id 연결 */}
+            {/* 완료 체크 버튼 — 클릭 시 onToggle로 부모에 알린다 */}
             <button
               type="button"
+              onClick={(e) => { e.stopPropagation(); onToggle(step.id, !step.done); }}
               className={[
                 "w-6 h-6 rounded-full border flex items-center justify-center transition-all duration-150",
                 step.done

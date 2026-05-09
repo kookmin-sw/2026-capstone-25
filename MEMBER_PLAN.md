@@ -282,11 +282,11 @@
 | **PR 브랜치** | `feat/step-check` |
 
 **산출물**:
-- [ ] `backend/src/routes/steps.ts` (PATCH /api/steps/:id — done 토글)
-- [ ] `backend/src/schemas/step.ts` (zod)
-- [ ] 상세 화면의 단계 체크박스 + 클릭 시 PATCH 호출
-- [ ] 진행률 자동 재계산 (frontend에서 done 비율 계산)
-- [ ] 카드 진행률 바도 즉시 갱신
+- [x] `backend/src/routes/steps.ts` (PATCH /api/steps/:id — done 토글)
+- [x] `backend/src/schemas/step.ts` (zod)
+- [x] 상세 화면의 단계 체크박스 + 클릭 시 PATCH 호출
+- [x] 진행률 자동 재계산 (frontend에서 done 비율 계산)
+- [x] 카드 진행률 바도 즉시 갱신
 
 ### J6. 타이머 + 헤더 "오늘 N분" — **지희**
 
