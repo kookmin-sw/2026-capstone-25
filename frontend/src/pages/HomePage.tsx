@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { decompose, type DecomposeResult } from "../services/decompose";
+import type { DecomposeRequest } from "../schemas/decompose";
 import { addTask } from "../services/tasks";
 
 const ACCEPTED_FILE_EXT = [
@@ -36,16 +36,10 @@ type FormValues = z.infer<typeof formSchema>;
 
 type TabKey = "direct" | "template";
 
-type ViewState =
-  | { kind: "form" }
-  | { kind: "loading" }
-  | { kind: "result"; data: DecomposeResult };
-
 export default function HomePage() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<TabKey>("direct");
   const [files, setFiles] = useState<File[]>([]);
-  const [view, setView] = useState<ViewState>({ kind: "form" });
 
   const {
     register,
@@ -81,7 +75,7 @@ export default function HomePage() {
     setFiles((prev) => prev.filter((_, i) => i !== idx));
   }
 
-  async function onSubmit(values: FormValues) {
+  function onSubmit(values: FormValues) {
     // AI 쪼개기 OFF — 단일 할 일로 저장 후 전체 목록으로 이동
     if (!values.wantSplit) {
       addTask({
@@ -95,25 +89,17 @@ export default function HomePage() {
       return;
     }
 
-    // AI 쪼개기 ON — 로딩 화면 → 결과 화면
-    setView({ kind: "loading" });
-    const result = await decompose({
+    // AI 쪼개기 ON — 결과 페이지로 입력 전달. 분해 호출과 화면 렌더는 ResultPage 책임.
+    const fileNames = files.map((f) => f.name).join(", ");
+    const memoParts = [values.description?.trim(), fileNames ? `첨부 파일: ${fileNames}` : ""]
+      .filter((s): s is string => !!s);
+    const input: DecomposeRequest = {
       title: values.title,
-      description: values.description,
-      startDate: values.startDate,
-      dueDate: values.dueDate,
-      files,
-      wantSplit: values.wantSplit,
-    });
-    setView({ kind: "result", data: result });
-  }
-
-  if (view.kind === "loading") {
-    return <LoadingView />;
-  }
-
-  if (view.kind === "result") {
-    return <ResultView result={view.data} onBack={() => setView({ kind: "form" })} />;
+      memo: memoParts.length > 0 ? memoParts.join("\n\n") : undefined,
+      startDate: values.startDate || undefined,
+      dueDate: values.dueDate || undefined,
+    };
+    navigate("/result", { state: { input } });
   }
 
   return (
@@ -172,7 +158,7 @@ export default function HomePage() {
                 readOnly={!wantSplit}
                 placeholder={
                   wantSplit
-                    ? "어떤 할 일이에요?\n할 일을 설명하는 파일을 첨부해도 좋아요."
+                    ? "어떤 할 일이에요? AI에게 전달하고 싶은 말을 자유롭게 작성하세요.\n할 일을 설명하는 파일을 첨부해도 좋아요."
                     : "AI 쪼개기를 켜면 메모와 파일을 추가할 수 있어요."
                 }
                 className={[
@@ -317,54 +303,3 @@ function tabClass(active: boolean) {
   ].join(" ");
 }
 
-function LoadingView() {
-  return (
-    <div className="px-4 lg:px-8 py-10 max-w-[520px] mx-auto w-full flex flex-col items-center text-center">
-      <div className="relative w-16 h-16 mb-6">
-        <span className="absolute inset-0 rounded-full border-4 border-ac-s2" />
-        <span className="absolute inset-0 rounded-full border-4 border-transparent border-t-ac animate-spin" />
-      </div>
-      <div className="text-lg font-bold text-tx mb-2">할 일을 단계로 쪼개고 있어요</div>
-      <div className="text-sm text-mu mb-6">잠시만 기다려 주세요…</div>
-    </div>
-  );
-}
-
-function ResultView({ result, onBack }: { result: DecomposeResult; onBack: () => void }) {
-  return (
-    <div className="px-4 lg:px-8 py-6 max-w-[720px] mx-auto w-full">
-      <div className="bg-sf border border-bd2 rounded-xl p-5 mb-4">
-        <div className="text-xs font-bold text-ac-d tracking-wider mb-2">PRESENT</div>
-        <div className="text-[15px] font-bold text-tx leading-[1.5]">{result.summary}</div>
-      </div>
-
-      <div className="bg-sf border border-bd2 rounded-xl overflow-hidden">
-        {result.chunks.map((c, i) => (
-          <div
-            key={i}
-            className={[
-              "px-[18px] py-4",
-              i < result.chunks.length - 1 ? "border-b border-bd2" : "",
-            ].join(" ")}
-          >
-            <div className="text-sm font-bold text-tx mb-1">{c.title}</div>
-            {c.detail && <div className="text-[13px] text-tx2 leading-[1.6]">{c.detail}</div>}
-          </div>
-        ))}
-      </div>
-
-      <button
-        type="button"
-        onClick={onBack}
-        className={[
-          "mt-[14px] w-full border-none rounded-[14px] py-[17px] text-[15px] font-bold tracking-[-0.2px] cursor-pointer transition-all",
-          "bg-gradient-to-b from-ac to-ac-d text-white",
-          "shadow-[0_8px_20px_rgba(255,133,103,.35),inset_0_-3px_0_rgba(0,0,0,.08),inset_0_2px_0_rgba(255,255,255,.25)]",
-          "active:scale-[.97] active:opacity-90",
-        ].join(" ")}
-      >
-        다시 입력하기
-      </button>
-    </div>
-  );
-}

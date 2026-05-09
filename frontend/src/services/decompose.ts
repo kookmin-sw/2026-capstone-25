@@ -1,36 +1,35 @@
-// AI 분해 mock — 백엔드 /api/decompose 구현 전까지 사용하는 placeholder
+import { supabase } from "../lib/supabase";
+import {
+  DecomposeApiResponseSchema,
+  type DecomposeApiResponse,
+  type DecomposeRequest,
+} from "../schemas/decompose";
 
-export type DecomposeInput = {
-  title: string;
-  description?: string;
-  startDate?: string;
-  dueDate?: string;
-  files: File[];
-  wantSplit: boolean;
-};
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
 
-export type DecomposeChunk = {
-  title: string;
-  detail?: string;
-};
-
-export type DecomposeResult = {
-  summary: string;
-  chunks: DecomposeChunk[];
-};
-
-export function decompose(input: DecomposeInput): Promise<DecomposeResult> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        summary: `"${input.title}"을(를) 4단계로 정리했어요.`,
-        chunks: [
-          { title: "1. 자료 모으기", detail: "참고 문헌·이전 작업물 정리" },
-          { title: "2. 초안 잡기", detail: "큰 흐름과 목차 작성" },
-          { title: "3. 본문 작성", detail: "구체적인 내용 채우기" },
-          { title: "4. 검토·마무리", detail: "오탈자·형식 점검 후 제출" },
-        ],
-      });
-    }, 1000);
-  });
+async function authHeaders(): Promise<Record<string, string>> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return headers;
 }
+
+export async function decompose(input: DecomposeRequest): Promise<DecomposeApiResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/decompose`, {
+    method: "POST",
+    headers: await authHeaders(),
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`AI 분해 요청이 실패했어요. (${response.status}) ${detail}`);
+  }
+
+  const json = (await response.json()) as unknown;
+  // 응답 모양이 스키마와 다르면 화면 렌더 전에 명확하게 끊어준다.
+  return DecomposeApiResponseSchema.parse(json);
+}
+
+export type { DecomposeApiResponse, DecomposeRequest } from "../schemas/decompose";

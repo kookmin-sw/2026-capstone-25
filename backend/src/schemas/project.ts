@@ -6,6 +6,8 @@ export const CreateStepSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   guide: z.string().optional(),
+  firstMove: z.string().optional(),
+  unblocker: z.string().optional(),
   estimatedMinutes: z.number().int().positive().optional(),
   boundarySignal: z.string().optional(),
 });

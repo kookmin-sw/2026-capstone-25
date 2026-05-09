@@ -184,6 +184,8 @@ router.post("/", async (req, res) => {
       title: step.title,
       description: step.description,
       guide: step.guide,
+      first_move: step.firstMove,
+      unblocker: step.unblocker,
       estimated_minutes: step.estimatedMinutes,
       boundary_signal: step.boundarySignal,
     })),

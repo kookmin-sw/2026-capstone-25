@@ -30,7 +30,7 @@
     <rect width="430" height="6" fill="#FF6B3D" rx="3"/>
     <circle cx="30" cy="42" r="15" fill="#FF6B3D"/>
     <text x="30" y="48" text-anchor="middle" font-size="15" font-weight="700" fill="#FFFFFF">②</text>
-    <text x="56" y="36" font-size="18" font-weight="700" fill="#222">산출물 단위</text>
+    <text x="56" y="36" font-size="18" font-weight="700" fill="#222">산출물 경계</text>
     <text x="56" y="56" font-size="11" fill="#888">Artifact Boundary</text>
     <text x="20" y="86" font-size="12" fill="#333">관찰 가능한 결과물이 손에 쥐어지는 지점.</text>
     <text x="20" y="104" font-size="12" fill="#333">'뭔가 끝냈다'는 감각을 만드는 자연 경계.</text>
@@ -42,7 +42,7 @@
     <rect width="430" height="6" fill="#FF6B3D" rx="3"/>
     <circle cx="30" cy="42" r="15" fill="#FF6B3D"/>
     <text x="30" y="48" text-anchor="middle" font-size="15" font-weight="700" fill="#FFFFFF">③</text>
-    <text x="56" y="36" font-size="18" font-weight="700" fill="#222">판단·결정 지점</text>
+    <text x="56" y="36" font-size="18" font-weight="700" fill="#222">결정 경계</text>
     <text x="56" y="56" font-size="11" fill="#888">Decision Point</text>
     <text x="20" y="86" font-size="12" fill="#333">다음 단계의 방향을 정하는 선택이 필요한 지점.</text>
     <text x="20" y="104" font-size="12" fill="#333">결정 앞에서 끊어 숙고 여지를 남긴다.</text>
@@ -101,10 +101,10 @@
   <g transform="translate(485,600)">
     <rect width="430" height="160" rx="12" fill="#F3FAF5" stroke="#BCE5CD" filter="url(#sh)"/>
     <rect width="430" height="6" fill="#22A560" rx="3"/>
-    <text x="20" y="42" font-size="18" font-weight="700" fill="#22A560">즉시성 · Immediacy</text>
-    <text x="20" y="76" font-size="12" fill="#333">지금 · 혼자 · 바로 시작 가능. 외부 대기는 별도 단계로</text>
-    <text x="20" y="94" font-size="12" fill="#333">만들지 않고, 사용자 액션 단계 description에 흡수한다.</text>
-    <text x="20" y="132" font-size="11" fill="#22A560" font-style="italic">"초안 송부 후 3일 답 없으면 재발송" 한 줄 포함</text>
+    <text x="20" y="42" font-size="18" font-weight="700" fill="#22A560">진입 가능성 · Approachability</text>
+    <text x="20" y="76" font-size="12" fill="#333">"어디서부터 어떻게 시작하는지"가 description 또는</text>
+    <text x="20" y="94" font-size="12" fill="#333">first_move에서 보인다. 큰 단계여도 첫 손짓이 명확하면 OK.</text>
+    <text x="20" y="132" font-size="11" fill="#22A560" font-style="italic">"본문 1장 초안" → 첫 동작: "1.1절 제목만 먼저 적기"</text>
   </g>
 
   <g transform="translate(930,600)">

@@ -1,10 +1,7 @@
+// /api/decompose 요청·응답 스키마.
+// backend/src/schemas/decompose.ts 와 모양이 같아야 한다. 한쪽을 바꿀 때 반드시 같이 갱신할 것.
 import { z } from "zod";
 
-// decompose 단일 호출 출력 스키마
-// AI가 반환한 JSON 텍스트를 이 스키마로 parse 한다.
-// 프론트/백에서 import해서 단일 소스로 사용한다.
-
-// 재분해 방향. 결과 화면 ③ 재분해 블록에서 "더 잘게/더 크게/AI에게 직접 얘기"를 누르면 같이 보낸다.
 export const RefineModeSchema = z.enum(["smaller", "larger", "feedback"]);
 export type RefineMode = z.infer<typeof RefineModeSchema>;
 
@@ -19,21 +16,6 @@ export const DecomposeRequestSchema = z.object({
 });
 
 export type DecomposeRequest = z.infer<typeof DecomposeRequestSchema>;
-
-
-// 2차 분해 요청 — 부모 단계 하나를 분해한다.
-export const SubDecomposeRequestSchema = z.object({
-  parent: z.object({
-    step_id: z.string().min(1),
-    step_title: z.string().min(1),
-    step_description: z.string(),
-    parent_goal: z.string().min(1),
-  }),
-  memo: z.string().max(5000).optional(),
-});
-
-export type SubDecomposeRequest = z.infer<typeof SubDecomposeRequestSchema>;
-
 
 export const BoundarySignalSchema = z.enum([
   "phase",
@@ -58,6 +40,8 @@ export const StepSchema = z.object({
   time_spent: z.number().nonnegative(),
 });
 
+export type Step = z.infer<typeof StepSchema>;
+
 export const AnalysisSchema = z.object({
   primary_type: z.string(),
   secondary_tags: z.array(z.string()),
@@ -76,17 +60,6 @@ export const ReasoningSchema = z.object({
   how_we_split: z.string(),
 });
 
-export const DecomposeResultSchema = z.object({
-  analysis: AnalysisSchema,
-  steps: z.array(StepSchema).min(1),
-  reasoning: ReasoningSchema,
-});
-
-export type DecomposeResult = z.infer<typeof DecomposeResultSchema>;
-
-// /api/decompose 응답 전체 모양. 양쪽에서 동일한 타입을 쓰기 위해 여기서 선언한다.
-// refine(더 잘게/더 크게/AI에게 직접 얘기)과 confirm(확정/수정/단일/돌아가기)은
-// 정적 데이터라 응답에 포함하지 않는다 — 프론트가 자체 상수로 들고 있다.
 export const ValidationIssueSchema = z.object({
   code: z.string(),
   severity: z.enum(["blocker", "warning"]),
@@ -107,4 +80,6 @@ export const DecomposeApiResponseSchema = z.object({
 });
 
 export type DecomposeApiResponse = z.infer<typeof DecomposeApiResponseSchema>;
-export type Step = z.infer<typeof StepSchema>;
+
+// confirm 액션 식별자 — 응답엔 없지만 result 페이지 내부 핸들러 시그니처에 쓰인다.
+export type ConfirmActionId = "save" | "edit" | "save-single" | "back";
