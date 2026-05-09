@@ -167,12 +167,12 @@
 | **PR 브랜치** | `feat/result-blocks` |
 
 **산출물**:
-- [ ] `pages/ResultPage.tsx` (4블록 컨테이너)
-- [ ] `components/result/ResultBlock.tsx` (단계 카드 리스트 + ✦ 뱃지)
-- [ ] `components/result/StepCard.tsx` (접힘/펼침, 가이드 텍스트 + 예상 시간 뱃지)
-- [ ] `components/result/ReasoningBlock.tsx` (왜 이렇게 나눴어요? 펼침)
-- [ ] `components/result/RefineBlock.tsx` (더 잘게/더 크게 두 버튼 → 백엔드 재호출)
-- [ ] `components/result/ConfirmBlock.tsx` (확정/돌아가기/단일저장 3버튼)
+- [x] `pages/ResultPage.tsx` (4블록 컨테이너)
+- [x] `components/result/ResultBlock.tsx` (단계 카드 리스트 + ✦ 뱃지)
+- [x] `components/result/StepCard.tsx` (접힘/펼침, 가이드 텍스트 + 예상 시간 뱃지)
+- [x] `components/result/ReasoningBlock.tsx` (왜 이렇게 나눴어요? 펼침)
+- [x] `components/result/RefineBlock.tsx` (더 잘게/더 크게 두 버튼 → 백엔드 재호출)
+- [x] `components/result/ConfirmBlock.tsx` (확정/돌아가기/단일저장 3버튼)
 
 ### R5. ④확정 통합 + 템플릿 카탈로그 — **재은**
 
