@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ChevronLeft, Trash2 } from "lucide-react";
 import ProgressCard from "../components/detail/ProgressCard";
 import StepRow from "../components/detail/StepRow";
-import { deleteProject, getProject, type ProjectDetail } from "../services/projects";
+import { deleteProject, getProject, toggleStep, type ProjectDetail, type StepDetail } from "../services/projects";
 
 // YYYY-MM-DD → D-day 문자열 계산
 function getDdayText(due: string | null): string {
@@ -15,6 +15,17 @@ function getDdayText(due: string | null): string {
   const diff = Math.ceil((dueDate.getTime() - todayDate.getTime()) / 86_400_000);
   if (diff === 0) return "D-Day";
   return diff > 0 ? `D-${diff}` : `D+${Math.abs(diff)}`;
+}
+
+// steps 배열로 진행률을 재계산한다
+function calcProgress(steps: StepDetail[]) {
+  const total = steps.length;
+  const done = steps.filter((s) => s.done).length;
+  return {
+    doneCount: done,
+    totalCount: total,
+    progress: total === 0 ? 0 : Math.round((done / total) * 100),
+  };
 }
 
 export default function ProjectDetailPage() {
@@ -34,6 +45,24 @@ export default function ProjectDetailPage() {
         setStatus("error");
       });
   }, [id]);
+
+  // 단계 완료 토글 — 낙관적 UI: 클릭 즉시 로컬 상태를 바꾸고 PATCH를 백그라운드로 보낸다.
+  // 실패하면 원래 상태로 되돌린다.
+  async function handleToggle(stepId: string, done: boolean) {
+    if (!project) return;
+
+    const prevSteps = project.steps;
+    const nextSteps = prevSteps.map((s) => s.id === stepId ? { ...s, done } : s);
+
+    setProject({ ...project, ...calcProgress(nextSteps), steps: nextSteps });
+
+    try {
+      await toggleStep(stepId, done);
+    } catch {
+      // 실패 시 롤백
+      setProject({ ...project, steps: prevSteps });
+    }
+  }
 
   async function handleDelete() {
     if (!project) return;
@@ -112,6 +141,7 @@ export default function ProjectDetailPage() {
               index={i}
               isNext={step.id === nextStepId}
               color={project.color}
+              onToggle={handleToggle}
             />
           ))}
         </div>

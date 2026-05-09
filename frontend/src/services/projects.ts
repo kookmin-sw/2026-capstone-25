@@ -97,3 +97,16 @@ export async function deleteProject(id: string) {
     throw new Error("프로젝트를 삭제하지 못했어요.");
   }
 }
+
+// 단계 완료 여부를 토글한다. done: true → 완료, false → 미완료.
+export async function toggleStep(id: string, done: boolean) {
+  const response = await fetch(`${API_BASE_URL}/api/steps/${id}`, {
+    method: "PATCH",
+    headers: await authHeaders(),
+    body: JSON.stringify({ done }),
+  });
+
+  if (!response.ok) {
+    throw new Error("단계 상태를 변경하지 못했어요.");
+  }
+}
