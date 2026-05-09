@@ -1,37 +1,119 @@
-## Welcome to GitHub Pages
+# 🐾 한발짝 — AI 과업 분해 & 집중 관리 서비스
 
-You can use the [editor on GitHub](https://github.com/kookmin-sw/cap-template/edit/master/index.md) to maintain and preview the content for your website in Markdown files.
+> 막막한 할 일, AI가 실행 가능한 단계로 나눠드립니다.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+---
 
-### Markdown
+## 🔗 목차
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+1. [💡 프로젝트 소개](#-프로젝트-소개)
+2. [🦾 주요 기능](#-주요-기능)
+3. [👋 팀원 소개](#-팀원-소개)
+4. [🌐 시스템 구조](#-시스템-구조)
+5. [🛠 기술 스택](#-기술-스택)
+6. [📝 소개 자료](#-소개-자료)
 
-```markdown
-Syntax highlighted code block
+---
 
-# Header 1
-## Header 2
-### Header 3
+## 💡 프로젝트 소개
 
-- Bulleted
-- List
+캘린더 앱은 이미 아는 일정을 배치하고, 할 일 앱은 이미 쪼개진 과업을 관리합니다.  
+**한발짝**은 그 앞 단계를 해결합니다.
 
-1. Numbered
-2. List
+- ✅ **한발짝**은 Claude API를 활용해 복잡한 과업을 즉시 실행 가능한 단계로 자동 분해합니다.
+- ✅ **한발짝**은 집중 타이머로 분해된 과업을 실행까지 이어줍니다.
+- ✅ **한발짝**은 캘린더 배치, 진행 관리, 리포트를 통해 입력부터 완주까지 끊김 없는 흐름을 제공합니다.
 
-**Bold** and _Italic_ and `Code` text
+---
 
-[Link](url) and ![Image](src)
-```
+## 🦾 주요 기능
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
+### 📝 입력 & 템플릿
+- 학업·개발·글쓰기·취업·창작·생활·여행·건강 8개 카테고리 템플릿 제공
+- 예상 기간·규모·분해 예시를 미리 확인 후 선택
 
-### Jekyll Themes
+### 🤖 AI 과업 분해
+- Claude API(Haiku 4.5) 기반 과업 자동 분해
+- 분해 결과가 마음에 들지 않으면 재분해 또는 자연어 피드백으로 조정
+- 원하는 단계를 선택해 2차 세분화 가능
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/kookmin-sw/cap-template/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+### ⏱ 집중 타이머
+- 원형 타이머 및 뽀모도로 모드 지원
+- 집중 시간 누적 기록
 
-### Support or Contact
+### 🌲 단계 트리 & 진행 관리
+- 분해 계보 시각화 및 드래그 정렬
+- 완료·진행·대기 상태 관리
 
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+### 📅 캘린더 일정 배치
+- 주간·월간 캘린더에 단계 드래그 배치
+- 날짜별 투두 자동 정렬
+
+### 📊 주간 리포트
+- 실행력·완료력·일정 신뢰도 자동 분석
+- AI 자동 코멘트·4주 집중 추이·프로젝트별 시간 분배 제공
+
+---
+
+## 👋 팀원 소개
+
+| 이름 | 역할 |
+|------|------|
+| [이재은](https://github.com/your-github) | 프론트엔드, AI 분해 엔진 설계·구현 |
+| [이지희](https://github.com/your-github) | 프론트엔드, DB 설계, RLS 정책, REST API 연동 |
+
+---
+
+## 🌐 시스템 구조
+
+> 시스템 구조 이미지 추가 예정
+
+---
+
+## 🛠 기술 스택
+
+### 🖥️ Frontend
+
+| 항목 | 기술 |
+|------|------|
+| Framework | React |
+| Build Tool | Vite |
+| Styling | CSS Modules |
+
+### 🖥️ Backend
+
+| 항목 | 기술 |
+|------|------|
+| Runtime | Node.js |
+| Framework | Express |
+| Database | Supabase (PostgreSQL) |
+| Auth | Supabase RLS |
+
+### 🤖 AI
+
+| 항목 | 기술 |
+|------|------|
+| API | Claude API (Anthropic) |
+| Model | claude-haiku-4-5 |
+
+
+### 🔧 Common
+
+| 항목 | 기술 |
+|------|------|
+| Version Control | Git, GitHub |
+| Design | Figma |
+| Communication | Notion |
+
+---
+
+## 📝 소개 자료
+
+- [📊 중간 발표 자료](#)
+- [📝 중간 보고서](#)
+- [🎬 시연 영상](#)
+- [🖼️ 포스터](#)
+
+---
+
+© 2026 한발짝 · CAPSTONE DESIGN 25조
