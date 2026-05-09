@@ -61,7 +61,7 @@
 | 이름 | 역할 |
 |------|------|
 | [이재은](https://github.com/your-github) | 프론트엔드, AI 분해 엔진 설계·구현 |
-| [이지희](https://github.com/your-github) | 프론트엔드, DB 설계, RLS 정책, REST API 연동 |
+| [이지희](https://github.com/your-github) | 프론트엔드, DB 설계, REST API 연동 |
 
 ---
 
