@@ -55,6 +55,35 @@
   --font-title: "Gaegu", "Noto Sans KR", sans-serif;
 }
 
+/* 타이머 슬라이더 — 목업과 동일한 커스텀 스타일 */
+.timer-slider {
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+  width: 100%;
+}
+.timer-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2.5px solid var(--color-ac);
+  box-shadow: 0 2px 8px rgba(255, 148, 120, 0.3);
+  cursor: pointer;
+}
+.timer-slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2.5px solid var(--color-ac);
+  box-shadow: 0 2px 8px rgba(255, 148, 120, 0.3);
+  cursor: pointer;
+}
+
 /* 본문 — 프로토타입 body 와 동일 */
 html,
 body {

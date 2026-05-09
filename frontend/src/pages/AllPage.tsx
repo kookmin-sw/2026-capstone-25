@@ -14,7 +14,8 @@ type ProjectGroup = {
 };
 
 function getDday(due: string | null) {
-  if (!due) return { label: "마감 X", dday: "마감 X", urgencyClass: "bg-tx text-white" };
+  // 마감일 없으면 은은한 뱃지로 표시
+  if (!due) return { label: "마감 X", dday: "마감 X", urgencyClass: "bg-fa text-mu" };
 
   const today = new Date();
   const dueDate = new Date(`${due}T00:00:00`);
@@ -22,8 +23,11 @@ function getDday(due: string | null) {
   const diff = Math.ceil((dueDate.getTime() - todayDate.getTime()) / 86_400_000);
 
   const dday = diff === 0 ? "D-Day" : diff > 0 ? `D-${diff}` : `D+${Math.abs(diff)}`;
+  // 초과·당일: 부드러운 레드 / 7일 이내: 앱 오렌지 계열 / 그 외: 크림 뱃지
   const urgencyClass =
-    diff < 0 || diff <= 1 ? "bg-red-600 text-white" : diff <= 7 ? "bg-ac text-white" : "bg-tx text-white";
+    diff <= 0 ? "bg-red-50 text-red-500 border border-red-200"
+    : diff <= 7 ? "bg-ac-s text-ac-d border border-ac-s2"
+    : "bg-fa text-mu border border-bd";
 
   return { label: due, dday, urgencyClass };
 }

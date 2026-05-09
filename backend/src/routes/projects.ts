@@ -27,6 +27,12 @@ type StepRow = {
   estimated_minutes: number | null;
 };
 
+type StepDetailRow = StepRow & {
+  description: string | null;
+  guide: string | null;
+  boundary_signal: string | null;
+};
+
 router.use(authMiddleware);
 
 router.get("/", async (req, res) => {
@@ -120,6 +126,80 @@ router.get("/", async (req, res) => {
           : null,
       };
     }),
+  });
+});
+
+// 프로젝트 단건 상세 조회 — 단계 전체(가이드 포함)를 반환한다.
+router.get("/:id", async (req, res) => {
+  const { id } = req.params;
+
+  const { data: project, error: projectError } = await supabase
+    .from("projects")
+    .select("id, raw_input, goal, color, due, is_single, created_at")
+    .eq("id", id)
+    .eq("user_id", req.userId)
+    .single();
+
+  if (projectError || !project) {
+    res.status(404).json({ error: "프로젝트를 찾을 수 없어요." });
+    return;
+  }
+
+  const { data: decompositions, error: decompositionsError } = await supabase
+    .from("decompositions")
+    .select("id")
+    .eq("project_id", id)
+    .order("round", { ascending: false })
+    .limit(1);
+
+  if (decompositionsError) {
+    res.status(500).json({ error: decompositionsError.message });
+    return;
+  }
+
+  const decompositionId = decompositions?.[0]?.id ?? null;
+  const steps: StepDetailRow[] = [];
+
+  if (decompositionId) {
+    const { data: stepData, error: stepsError } = await supabase
+      .from("steps")
+      .select("id, decomposition_id, order_idx, title, done, estimated_minutes, description, guide, boundary_signal")
+      .eq("decomposition_id", decompositionId)
+      .order("order_idx", { ascending: true });
+
+    if (stepsError) {
+      res.status(500).json({ error: stepsError.message });
+      return;
+    }
+
+    steps.push(...((stepData ?? []) as StepDetailRow[]));
+  }
+
+  const doneCount = steps.filter((s) => s.done).length;
+  const totalCount = steps.length;
+  const progress = totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100);
+
+  res.json({
+    id: project.id,
+    title: project.goal,
+    rawInput: project.raw_input,
+    color: project.color,
+    due: project.due,
+    isSingle: project.is_single,
+    createdAt: project.created_at,
+    progress,
+    doneCount,
+    totalCount,
+    steps: steps.map((s) => ({
+      id: s.id,
+      orderIdx: s.order_idx,
+      title: s.title,
+      done: s.done,
+      estimatedMinutes: s.estimated_minutes,
+      description: s.description,
+      guide: s.guide,
+      boundarySignal: s.boundary_signal,
+    })),
   });
 });
 
