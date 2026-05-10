@@ -13,7 +13,8 @@ export const CreateStepSchema = z.object({
 });
 
 export const CreateProjectSchema = z.object({
-  rawInput: z.string().min(1),
+  title: z.string().min(1).max(200),
+  memo: z.string().max(5000).optional(),
   primaryType: z.string().optional(),
   secondaryTags: z.array(z.string()).default([]),
   goal: z.string().min(1),

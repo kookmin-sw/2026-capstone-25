@@ -10,7 +10,8 @@ const router = Router();
 
 type ProjectRow = {
   id: string;
-  raw_input: string;
+  title: string | null; // 마이그레이션 004 — 기존 row는 NULL일 수 있어 매핑 시 goal로 fallback
+  memo: string | null;
   goal: string;
   color: string | null;
   due: string | null;
@@ -30,6 +31,8 @@ type StepRow = {
 type StepDetailRow = StepRow & {
   description: string | null;
   guide: string | null;
+  first_move: string | null;
+  unblocker: string | null;
   boundary_signal: string | null;
 };
 
@@ -40,7 +43,7 @@ router.get("/", async (req, res) => {
 
   const { data: projects, error: projectsError } = await supabase
     .from("projects")
-    .select("id, raw_input, goal, color, due, is_single, created_at")
+    .select("id, title, memo, goal, color, due, is_single, created_at")
     .eq("user_id", userId)
     .order("due", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: false });
@@ -108,8 +111,9 @@ router.get("/", async (req, res) => {
 
       return {
         id: project.id,
-        title: project.goal,
-        rawInput: project.raw_input,
+        // 사용자 입력 제목을 우선 노출. 마이그레이션 004 이전 row는 title이 NULL이라 goal로 fallback.
+        title: project.title ?? project.goal,
+        memo: project.memo,
         color: project.color,
         due: project.due,
         isSingle: project.is_single,
@@ -135,7 +139,7 @@ router.get("/:id", async (req, res) => {
 
   const { data: project, error: projectError } = await supabase
     .from("projects")
-    .select("id, raw_input, goal, color, due, is_single, created_at")
+    .select("id, title, memo, goal, color, due, is_single, created_at")
     .eq("id", id)
     .eq("user_id", req.userId)
     .single();
@@ -163,7 +167,7 @@ router.get("/:id", async (req, res) => {
   if (decompositionId) {
     const { data: stepData, error: stepsError } = await supabase
       .from("steps")
-      .select("id, decomposition_id, order_idx, title, done, estimated_minutes, description, guide, boundary_signal")
+      .select("id, decomposition_id, order_idx, title, done, estimated_minutes, description, guide, first_move, unblocker, boundary_signal")
       .eq("decomposition_id", decompositionId)
       .order("order_idx", { ascending: true });
 
@@ -181,8 +185,9 @@ router.get("/:id", async (req, res) => {
 
   res.json({
     id: project.id,
-    title: project.goal,
-    rawInput: project.raw_input,
+    // 사용자 입력 제목 우선. 마이그레이션 004 이전 row는 NULL이라 goal로 fallback.
+    title: project.title ?? project.goal,
+    memo: project.memo,
     color: project.color,
     due: project.due,
     isSingle: project.is_single,
@@ -198,6 +203,8 @@ router.get("/:id", async (req, res) => {
       estimatedMinutes: s.estimated_minutes,
       description: s.description,
       guide: s.guide,
+      firstMove: s.first_move,
+      unblocker: s.unblocker,
       boundarySignal: s.boundary_signal,
     })),
   });
@@ -218,7 +225,8 @@ router.post("/", async (req, res) => {
     .from("projects")
     .insert({
       user_id: userId,
-      raw_input: input.rawInput,
+      title: input.title,
+      memo: input.memo,
       primary_type: input.primaryType,
       secondary_tags: input.secondaryTags,
       goal: input.goal,
