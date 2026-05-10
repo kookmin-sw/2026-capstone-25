@@ -7,10 +7,10 @@ import type {
   DecomposeRequest,
   RefineMode,
 } from "../schemas/decompose";
-import ResultBlock from "./result/ResultBlock";
-import ReasoningBlock from "./result/ReasoningBlock";
-import RefineBlock from "./result/RefineBlock";
-import ConfirmBlock from "./result/ConfirmBlock";
+import ResultBlock from "../components/result/ResultBlock";
+import ReasoningBlock from "../components/result/ReasoningBlock";
+import RefineBlock from "../components/result/RefineBlock";
+import ConfirmBlock from "../components/result/ConfirmBlock";
 
 // 결과 화면 진입 시 location.state 로 전달되는 입력. HomePage 의 navigate 와 모양을 맞춘다.
 type LocationState = { input?: DecomposeRequest };

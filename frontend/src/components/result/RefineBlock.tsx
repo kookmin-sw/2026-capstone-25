@@ -36,7 +36,7 @@ export default function RefineBlock({ onRefine, busy, historyCount, onRevert }: 
             ].join(" ")}
           >
             {opt.label}
-            <span className="text-[10px] text-mu font-medium">· {opt.hint}</span>
+            <span className="text-[10px] text-mu font-medium">{opt.hint}</span>
           </button>
         ))}
       </div>

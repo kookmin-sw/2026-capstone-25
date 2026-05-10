@@ -28,6 +28,7 @@
 | 영역 | 구현 깊이 | 담당 |
 |---|---|---|
 | 결과 4블록 UI 정식 분리 (`ResultPage` + 4개 block 컴포넌트) | 완전 | 재은 |
+| 결과 → 프로젝트 확정 저장 (분해 결과 → `POST /api/projects` → `/all` 이동) | 완전 | 재은 |
 | StepCard 가이드 lazy-load + 3문장 템플릿(산출물·첫 동작·막힘 대응) | 완전 | 재은 |
 | 2단계 쪼개기 프론트 UI (상세 화면 통합 + 하위 단계 박스 누적) | 완전 | 재은 |
 | RefineBlock — "AI에게 직접 얘기" 피드백 입력 + 이전 버전 3개 히스토리 | 완전 | 재은 |
@@ -79,19 +80,25 @@
 |---|---|
 | **작업일** | _일 |
 | **선행 조건** | v1의 R4 완료 분량(현재 `HomePage.tsx`에 통합된 결과 뷰)을 별도 페이지로 추출 |
-| **검증** | 입력→백엔드 호출→`/result`로 라우트 전환→4블록 표시. 단계 카드 펼침 시 가이드 lazy 표시. RefineBlock의 "더 잘게/더 크게" 그대로 동작 |
+| **검증** | 입력→백엔드 호출→`/result`로 라우트 전환→4블록 표시. 단계 카드 펼침 시 가이드 lazy 표시. RefineBlock의 "더 잘게/더 크게" 그대로 동작. ConfirmBlock의 "확정하기" 클릭 시 분해 결과가 DB에 저장되고 `/all`로 이동, 새로고침 후에도 유지. ConfirmBlock의 "직접 수정하기" 클릭 시 결과 화면이 편집 모드로 전환되어 단계 추가/삭제/제목 수정/순서 변경 가능, 편집 후 "확정하기"로 편집된 단계가 저장됨 |
 | **PR 브랜치** | `feat/result-page-split` |
 
 **산출물**:
-- [ ] `pages/ResultPage.tsx` (4블록 컨테이너 — 라우트 `/result` 또는 `/home/result` 분리)
-- [ ] `components/result/ResultBlock.tsx` (단계 카드 리스트 + ✦ "AI가 N개 단계로 정리했어요" 뱃지)
-- [ ] `components/result/StepCard.tsx` (접힘/펼침 + 번호 뱃지 + 예상 시간 뱃지)
-- [ ] `components/result/StepGuide.tsx` (펼침 시 산출물·첫 동작·막힘 대응 3문장 박스)
-- [ ] `components/result/ReasoningBlock.tsx` (💭 왜 이렇게 나눴어요? — analysis "무엇을 읽었는지" + "어떤 기준으로 나눴는지" 2섹션)
-- [ ] `components/result/RefineBlock.tsx` (더 잘게/더 크게 두 칩 — 기존 동작 그대로 이식)
-- [ ] `components/result/ConfirmBlock.tsx` (확정/직접 수정/쪼개지 않고 저장/돌아가기 4버튼)
-- [ ] `HomePage.tsx`의 결과 뷰 분리 — 폼/로딩만 남김, 결과는 라우트 이동
-- [ ] 가이드 lazy-load — `step.guide`가 비어 있으면 펼친 시점에 백엔드에서 보강(또는 분해 응답에 항상 포함되도록 프롬프트에서 강제)
+- [x] `pages/ResultPage.tsx` (4블록 컨테이너 — 라우트 `/result` 또는 `/home/result` 분리)
+- [x] `components/result/ResultBlock.tsx` (단계 카드 리스트 + ✦ "AI가 N개 단계로 정리했어요" 뱃지)
+- [x] `components/result/StepCard.tsx` (접힘/펼침 + 번호 뱃지 + 예상 시간 뱃지)
+- [x] `components/result/StepCard.tsx` 내부 `GuideRow` 함수로 통합 — 펼침 시 산출물·첫 동작·막힘 대응 3문장 박스 (별도 `StepGuide.tsx` 파일 미생성)
+- [x] `components/result/ReasoningBlock.tsx` (💭 왜 이렇게 나눴어요? — analysis "무엇을 읽었는지" + "어떤 기준으로 나눴는지" 2섹션)
+- [x] `components/result/RefineBlock.tsx` (더 잘게/더 크게 두 칩 — 기존 동작 그대로 이식)
+- [x] `components/result/ConfirmBlock.tsx` (확정/직접 수정/쪼개지 않고 저장/돌아가기 4버튼)
+- [x] `HomePage.tsx`의 결과 뷰 분리 — 폼/로딩만 남김, 결과는 라우트 이동
+- [x] 가이드 lazy-load — 분해 응답에 `guide`·`first_move`·`unblocker`가 항상 포함되도록 프롬프트에서 강제(채택)
+- [ ] `frontend/src/services/projects.ts`에 `createProject(input)` 추가 — `POST /api/projects` 호출
+- [ ] `pages/ResultPage.tsx`의 `onConfirmAction("save")` — 분해 결과를 `CreateProjectSchema` 모양으로 매핑 → `createProject` 호출 → 성공 시 `navigate("/all")`
+- [ ] `onConfirmAction("save-single")` — `isSingle: true` + `steps: []`로 단일 프로젝트 저장 → `/all` 이동
+- [ ] 저장 중 ConfirmBlock 버튼 비활성화 + 실패 시 사용자 친화 에러 메시지 노출(현재 `alert` 자리)
+- [ ] `onConfirmAction("edit")` — 결과 화면 인라인 편집 모드 진입(저장 전 메모리 내 단계 상태 편집: 단계 추가/삭제/제목 수정/순서 변경). 편집 완료 후 "확정하기" 시 편집된 단계로 `createProject` 호출
+- [ ] 편집 UI는 J7의 `StepEditor` 컴포넌트를 공용 위치(`components/edit/StepEditor.tsx` 등)에서 재사용 — 결과/상세 두 화면이 동일 컴포넌트 사용
 
 ### R7. 2단계 쪼개기 프론트 통합 — **재은**
 
@@ -122,9 +129,10 @@
 **산출물**:
 - [ ] `RefineBlock.tsx`에 피드백 textarea + 전송 버튼 추가
 - [ ] `services/decompose.ts`에 `userFeedback` 인자 추가 → 백엔드 전달
-- [ ] `backend/src/routes/decompose.ts`에서 `userFeedback`을 user 메시지에 동봉(prompt cache 접두부 영향 없도록 user 쪽에 배치)
-- [ ] `useState<DecomposeResult[]>` 최대 3개 버전 보관 — `pushVersion`/`popVersion` 헬퍼
-- [ ] "돌리기" 버튼 — 직전 버전으로 복원
+- [x] `backend/src/routes/decompose.ts`에서 `userFeedback`을 user 메시지에 동봉(prompt cache 접두부 영향 없도록 user 쪽에 배치)
+- [x] `useState<DecomposeResult[]>` 최대 3개 버전 보관 — `pushVersion`/`popVersion` 헬퍼
+- [x] "돌리기" 버튼 — 직전 버전으로 복원
+- [ ] RefineBlock 히스토리 드롭다운(최대 3개) — 직전 1개 pop 외에 임의 이전 버전으로 복원할 수 있도록 UI 확장(§3.3 "최대 3개 이전 버전 히스토리 복원 가능")
 - [ ] (선택) 시스템 프롬프트에 "사용자 피드백이 있을 때 반영 규칙" 명시
 
 ### R9. 템플릿 카탈로그 8 카테고리 + structureHint — **재은**
@@ -156,7 +164,7 @@
 | **PR 브랜치** | `feat/attachments` |
 
 **산출물**:
-- [ ] `frontend` 측 — 폼에 파일 input 추가, 3개 제한, 형식 화이트리스트 (§3.2)
+- [x] `frontend` 측 — 폼에 파일 input 추가, 3개 제한, 형식 화이트리스트 (§3.2)
 - [ ] `frontend/src/services/decompose.ts` — `multipart/form-data`로 파일 동봉
 - [ ] `backend/src/routes/decompose.ts` — multer(또는 동급) 미들웨어로 파일 수신
 - [ ] `backend/src/lib/extract.ts` — 형식별 추출
