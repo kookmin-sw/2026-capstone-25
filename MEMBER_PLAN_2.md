@@ -81,7 +81,7 @@
 | **작업일** | _일 |
 | **선행 조건** | v1의 R4 완료 분량(현재 `HomePage.tsx`에 통합된 결과 뷰)을 별도 페이지로 추출 |
 | **검증** | 입력→백엔드 호출→`/result`로 라우트 전환→4블록 표시. 단계 카드 펼침 시 가이드 lazy 표시. RefineBlock의 "더 잘게/더 크게" 그대로 동작. ConfirmBlock의 "확정하기" 클릭 시 분해 결과가 DB에 저장되고 `/all`로 이동, 새로고침 후에도 유지. ConfirmBlock의 "직접 수정하기" 클릭 시 결과 화면이 편집 모드로 전환되어 단계 추가/삭제/제목 수정/순서 변경 가능, 편집 후 "확정하기"로 편집된 단계가 저장됨 |
-| **PR 브랜치** | `feat/result-page-split` |
+| **PR 브랜치** | `feat/result-improvement` |
 
 **산출물**:
 - [x] `pages/ResultPage.tsx` (4블록 컨테이너 — 라우트 `/result` 또는 `/home/result` 분리)
@@ -93,10 +93,18 @@
 - [x] `components/result/ConfirmBlock.tsx` (확정/직접 수정/쪼개지 않고 저장/돌아가기 4버튼)
 - [x] `HomePage.tsx`의 결과 뷰 분리 — 폼/로딩만 남김, 결과는 라우트 이동
 - [x] 가이드 lazy-load — 분해 응답에 `guide`·`first_move`·`unblocker`가 항상 포함되도록 프롬프트에서 강제(채택)
-- [ ] `frontend/src/services/projects.ts`에 `createProject(input)` 추가 — `POST /api/projects` 호출
-- [ ] `pages/ResultPage.tsx`의 `onConfirmAction("save")` — 분해 결과를 `CreateProjectSchema` 모양으로 매핑 → `createProject` 호출 → 성공 시 `navigate("/all")`
-- [ ] `onConfirmAction("save-single")` — `isSingle: true` + `steps: []`로 단일 프로젝트 저장 → `/all` 이동
-- [ ] 저장 중 ConfirmBlock 버튼 비활성화 + 실패 시 사용자 친화 에러 메시지 노출(현재 `alert` 자리)
+- [x] `frontend/src/services/projects.ts`에 `createProject(input)` 추가 — `POST /api/projects` 호출
+- [x] `pages/ResultPage.tsx`의 `onConfirmAction("save")` — 분해 결과를 `CreateProjectSchema` 모양으로 매핑 → `createProject` 호출 → 성공 시 `navigate("/all")`
+- [x] `onConfirmAction("save-single")` — `isSingle: true` + `steps: []`로 단일 프로젝트 저장 → `/all` 이동
+- [x] 저장 중 ConfirmBlock 버튼 비활성화 + 실패 시 사용자 친화 에러 메시지 노출(현재 `alert` 자리)
+- [x] `supabase/migrations/003_steps_modify.sql` — `steps.first_move`·`unblocker` 컬럼 추가 (가이드 3박스 영속화)
+- [x] `supabase/migrations/004_projects_modify.sql` — `projects.title`·`memo` 추가, `raw_input` 제거 (사용자 입력 제목과 AI 정제 `goal` 분리)
+- [x] `backend/src/schemas/project.ts` — `CreateProjectSchema`에 `title`(min1/max200)·`memo`(max5000) 반영, `rawInput` 제거
+- [x] `backend/src/routes/projects.ts` — `GET /api/projects`·`GET /api/projects/:id`·`POST /api/projects`에 `title`·`memo`·`first_move`·`unblocker` 동기화 (선택/매핑/insert 모두). 기존 row 호환을 위해 `title ?? goal` fallback
+- [x] `frontend/src/services/projects.ts` — `ProjectSummary`·`ProjectDetail`·`CreateProjectInput`·`StepDetail` 타입에 `memo`·`firstMove`·`unblocker` 반영
+- [x] StepCard 예상 시간 적응형 표시 — 60분 미만 분, 720분 미만 시간, 5400분 미만 일, 그 이상 주
+- [x] StepCard description 펼침 시 전체 표시 (`line-clamp-1` ↔ `whitespace-pre-wrap` 토글)
+- [x] Supabase prod에 003·004 마이그레이션 적용 (J12 배포 단계에서 함께 실행 가능)
 - [ ] `onConfirmAction("edit")` — 결과 화면 인라인 편집 모드 진입(저장 전 메모리 내 단계 상태 편집: 단계 추가/삭제/제목 수정/순서 변경). 편집 완료 후 "확정하기" 시 편집된 단계로 `createProject` 호출
 - [ ] 편집 UI는 J7의 `StepEditor` 컴포넌트를 공용 위치(`components/edit/StepEditor.tsx` 등)에서 재사용 — 결과/상세 두 화면이 동일 컴포넌트 사용
 
@@ -376,7 +384,7 @@ grep -c "\[ \]" MEMBER_PLAN_2.md   # 미완 산출물 수
 | 영역 | 추가 파일 수 (approx) | 주요 파일 |
 |---|---|---|
 | `frontend/src/pages/` | ~1 | ResultPage |
-| `frontend/src/components/result/` | ~6 | ResultBlock, StepCard, StepGuide, ReasoningBlock, RefineBlock, ConfirmBlock |
+| `frontend/src/components/result/` | ~5 | ResultBlock, StepCard(GuideRow 통합), ReasoningBlock, RefineBlock, ConfirmBlock |
 | `frontend/src/components/detail/` | ~2 | SubStepBox, StepEditor |
 | `frontend/src/components/template/` | ~2 | TemplateCard, TemplatePreviewSheet |
 | `frontend/src/components/calendar/` | ~3 | WeekStrip, DayList, MonthGrid |
@@ -388,6 +396,7 @@ grep -c "\[ \]" MEMBER_PLAN_2.md   # 미완 산출물 수
 | `backend/src/schemas/` | ~1 | calendar |
 | `backend/src/lib/` | ~1 | extract (파일 텍스트 추출) |
 | `backend/scripts/` | ~2 | regression-cases.json, regression.ts |
+| `supabase/migrations/` | ~2 | 003_steps_modify, 004_projects_modify |
 | `docs/` | ~1 | decompose-quality.md |
 
 ---
