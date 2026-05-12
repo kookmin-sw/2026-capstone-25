@@ -8,15 +8,15 @@ import { postTimeSpent } from "../services/timer";
 
 type Mode = "timepick" | "timer";
 
-// 빠른 선택 칩 목록 (분)
-const QUICK_CHIPS = [10, 25, 45, 60];
+// 빠른 선택 칩 목록 (분) — 덜 애매한 단위로 구성
+const QUICK_CHIPS = [15, 30, 45, 60];
 
 export default function TimerPage() {
   const { stepId } = useParams<{ stepId: string }>();
   const navigate = useNavigate();
 
   const [mode, setMode] = useState<Mode>("timepick");
-  const [totalMin, setTotalMin] = useState(25);
+  const [totalMin, setTotalMin] = useState(30);
 
   // 카운트다운 상태
   const [totalSec, setTotalSec] = useState(0);
@@ -44,10 +44,11 @@ export default function TimerPage() {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [isOn, isPaused, totalSec]);
 
-  // 타이머 종료 처리 — 경과 시간을 백엔드에 저장하고 /all로 이동
+  // 타이머 종료 처리 — 경과 시간을 백엔드에 저장하고 /all로 이동.
+  // 60초 미만은 저장하지 않는다 (1초 실행해도 1분으로 올라가는 문제 방지).
   async function handleEnd(elapsed: number) {
     setIsOn(false);
-    const mins = Math.ceil(elapsed / 60);
+    const mins = Math.floor(elapsed / 60);
     if (stepId && mins >= 1) {
       try { await postTimeSpent(stepId, mins); } catch { /* 실패해도 화면은 이동 */ }
     }
@@ -74,19 +75,19 @@ export default function TimerPage() {
   // ── 시간 설정 화면 ──
   if (mode === "timepick") {
     return (
-      <main className="min-h-screen bg-bg text-tx flex flex-col items-center px-6 py-10 max-w-[420px] mx-auto w-full">
+      <main className="min-h-screen bg-bg text-tx flex flex-col items-center px-6 py-10 max-w-lg mx-auto w-full">
         {/* 뒤로가기 */}
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="self-start bg-sf border border-bd rounded-xl p-2.5 text-tx shadow-sm mb-8"
+          className="self-start bg-sf border border-bd rounded-xl p-2.5 text-tx shadow-sm mb-8 cursor-pointer"
           aria-label="뒤로가기"
         >
           <ChevronLeft size={16} />
         </button>
 
         <h1 className="text-2xl font-black text-tx mb-1">얼마나 집중할까요?</h1>
-        <p className="text-sm text-mu mb-8">25분 집중하면 한 발짝 나아가요</p>
+        <p className="text-sm text-mu mb-8">30분 집중하면 한 발짝 나아가요</p>
 
         {/* 분 수 표시 */}
         <div className="flex items-baseline gap-1 mb-6">
@@ -106,7 +107,7 @@ export default function TimerPage() {
           max={60}
           value={totalMin}
           onChange={(e) => setTotalMin(Number(e.target.value))}
-          className="timer-slider mb-1"
+          className="timer-slider mb-1 cursor-pointer"
           style={{
             background: `linear-gradient(to right, var(--color-ac) ${((totalMin - 1) / 59) * 100}%, var(--color-bd) ${((totalMin - 1) / 59) * 100}%)`,
           }}
@@ -123,7 +124,7 @@ export default function TimerPage() {
               type="button"
               onClick={() => setTotalMin(n)}
               className={[
-                "px-[18px] py-[10px] rounded-xl border text-sm font-black",
+                "px-[18px] py-[10px] rounded-xl border text-sm font-black cursor-pointer",
                 totalMin === n
                   ? "border-ac bg-ac-s text-ac-d"
                   : "border-bd bg-sf text-tx2",
@@ -139,14 +140,14 @@ export default function TimerPage() {
           <button
             type="button"
             onClick={startTimer}
-            className="w-full rounded-xl bg-ac text-white py-4 text-sm font-black"
+            className="w-full rounded-xl bg-ac text-white py-4 text-sm font-black cursor-pointer"
           >
             집중 시작하기
           </button>
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="w-full text-center text-sm font-bold text-mu py-2"
+            className="w-full text-center text-sm font-bold text-mu py-2 cursor-pointer"
           >
             돌아가기
           </button>
@@ -157,11 +158,11 @@ export default function TimerPage() {
 
   // ── 카운트다운 화면 ──
   return (
-    <main className="min-h-screen bg-bg text-tx flex flex-col items-center justify-between px-6 py-10 max-w-[420px] mx-auto w-full">
+    <main className="min-h-screen bg-bg text-tx flex flex-col items-center justify-between px-6 py-10 max-w-lg mx-auto w-full">
       <button
         type="button"
         onClick={() => { setMode("timepick"); setIsOn(false); if (intervalRef.current) clearInterval(intervalRef.current); }}
-        className="self-start bg-sf border border-bd rounded-xl p-2.5 text-tx shadow-sm"
+        className="self-start bg-sf border border-bd rounded-xl p-2.5 text-tx shadow-sm cursor-pointer"
         aria-label="설정으로"
       >
         <ChevronLeft size={16} />
@@ -174,14 +175,14 @@ export default function TimerPage() {
         <button
           type="button"
           onClick={() => setIsPaused((prev) => !prev)}
-          className="w-full rounded-xl bg-ac-s border border-ac text-ac-d py-4 text-sm font-black"
+          className="w-full rounded-xl bg-ac-s border border-ac text-ac-d py-4 text-sm font-black cursor-pointer"
         >
           {isPaused ? "▶ 계속하기" : "⏸ 일시정지"}
         </button>
         <button
           type="button"
           onClick={() => void handleStop()}
-          className="w-full rounded-xl bg-sf border border-bd text-mu py-3.5 text-sm font-black"
+          className="w-full rounded-xl bg-sf border border-bd text-mu py-3.5 text-sm font-black cursor-pointer"
         >
           ■ 종료하기
         </button>

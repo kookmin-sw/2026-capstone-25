@@ -239,14 +239,14 @@
 | **PR 브랜치** | `feat/calendar-tab` |
 
 **산출물**:
-- [ ] `backend/src/schemas/calendar.ts` — `ScheduleAssignmentSchema` zod 정의
-- [ ] `backend/src/routes/calendar.ts` — `GET /api/calendar?from&to` (범위 조회) · `POST /api/calendar` (배정 생성) · `PATCH /api/calendar/:id` (날짜·우선순위 변경) · `DELETE /api/calendar/:id`
-- [ ] `pages/CalendarPage.tsx` — 주간/월간 토글 컨테이너(세그먼트 컨트롤, 뷰 상태는 세션 내 유지)
-- [ ] `components/calendar/WeekStrip.tsx` — 7일 스트립(요일명 + 날짜 원형, 오늘 주황 강조, 선택일 검정 배경) + "오늘로 이동" 버튼
-- [ ] `components/calendar/DayList.tsx` — 선택 날짜의 단계 카드 리스트(프로젝트 아이콘 + 단계 제목 + 프로젝트명 + ▲/▼ 우선순위 버튼)
-- [ ] `components/calendar/MonthGrid.tsx` — 7×6 그리드 + 프로젝트 색상 칩(3개 초과 시 "+N개") + 마감일 D-Day 뱃지 + 이전/다음 달 화살표
-- [ ] `components/detail/AssignDateButton.tsx` — 프로젝트 상세의 단계 카드에 날짜 배정 버튼(date picker 또는 미니 캘린더 팝오버) → `POST /api/calendar`
-- [ ] `frontend/src/services/calendar.ts` — list/create/patch/delete API 호출 함수
+- [x] `backend/src/schemas/calendar.ts` — `ScheduleAssignmentSchema` zod 정의
+- [x] `backend/src/routes/calendar.ts` — `GET /api/calendar?from&to` (범위 조회) · `POST /api/calendar` (배정 생성) · `PATCH /api/calendar/:id` (날짜·우선순위 변경) · `DELETE /api/calendar/:id`
+- [x] `pages/CalendarPage.tsx` — 주간/월간 토글 컨테이너(세그먼트 컨트롤, 뷰 상태는 세션 내 유지)
+- [x] `components/calendar/WeekStrip.tsx` — 7일 스트립(요일명 + 날짜 원형, 오늘 주황 강조, 선택일 검정 배경) + "오늘로 이동" 버튼
+- [x] `components/calendar/DayList.tsx` — 선택 날짜의 단계 카드 리스트(프로젝트 아이콘 + 단계 제목 + 프로젝트명 + ▲/▼ 우선순위 버튼)
+- [x] `components/calendar/MonthGrid.tsx` — 7×6 그리드 + 프로젝트 색상 칩(3개 초과 시 "+N개") + 마감일 D-Day 뱃지 + 이전/다음 달 화살표
+- [x] `components/detail/AssignDateButton.tsx` — 프로젝트 상세의 단계 카드에 날짜 배정 버튼(date picker 또는 미니 캘린더 팝오버) → `POST /api/calendar`
+- [x] `frontend/src/services/calendar.ts` — list/create/patch/delete API 호출 함수
 - [ ] `backend/src/index.ts`에 `/api/calendar` 라우트 연결
 - [ ] 프로젝트 색상은 `projects.color` 그대로 사용(§14.3)
 - [ ] 빈 상태 — 선택 날짜에 배정된 단계가 0이면 "이 날짜에 배정된 할 일이 없어요"

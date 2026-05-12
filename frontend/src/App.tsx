@@ -8,11 +8,7 @@ import MePage from "./pages/MePage";
 import ResultPage from "./pages/ResultPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import TimerPage from "./pages/TimerPage";
-
-// 각 탭의 placeholder
-function CalendarPage() {
-  return <h1 className="p-6 text-2xl font-bold">일정</h1>;
-}
+import CalendarPage from "./pages/CalendarPage";
 function ReportPage() {
   return <h1 className="p-6 text-2xl font-bold">리포트</h1>;
 }
