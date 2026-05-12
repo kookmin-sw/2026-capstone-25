@@ -152,6 +152,8 @@ export async function createProject(input: CreateProjectInput): Promise<{ id: st
   }
 
   return (await response.json()) as { id: string };
+}
+
 // 단계 목록을 편집 저장한다 — 새 round decomposition을 생성한다.
 export async function editSteps(projectId: string, steps: { id?: string; title: string }[]) {
   const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/steps`, {
