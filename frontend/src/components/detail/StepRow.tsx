@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, Check } from "lucide-react";
 import type { StepDetail } from "../../services/projects";
+import AssignDateButton from "./AssignDateButton";
 
 type Props = {
   step: StepDetail;
@@ -89,8 +90,10 @@ export default function StepRow({ step, index, isNext, color, onToggle }: Props)
           <GuideBox label="👣 첫 동작" value={step.firstMove} fallback="첫 동작 안내가 없어요." />
           <GuideBox label="🆘 막혔다면" value={step.unblocker} fallback="막혔을 때 안내가 없어요." />
 
-          {/* 액션 버튼 — 시작 + 완료 체크 */}
+          {/* 액션 버튼 — 날짜 배정 + 시작 + 완료 체크 */}
           <div className="flex items-center justify-end gap-2 pt-1">
+            {/* 날짜 배정 버튼 */}
+            <AssignDateButton stepId={step.id} />
             {!step.done && (
               <button
                 type="button"
