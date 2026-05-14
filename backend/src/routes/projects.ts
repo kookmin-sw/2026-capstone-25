@@ -366,6 +366,149 @@ router.patch("/:id/steps", async (req, res) => {
   res.status(200).json({ ok: true });
 });
 
+// GET /api/projects/:id/rounds — 버전 목록 조회 (최신 3개까지)
+// 각 round의 번호·생성일·trigger·단계 수를 반환한다.
+router.get("/:id/rounds", async (req, res) => {
+  const { id } = req.params;
+
+  const { data: project, error: projectError } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("id", id)
+    .eq("user_id", req.userId)
+    .single();
+
+  if (projectError || !project) {
+    res.status(404).json({ error: "프로젝트를 찾을 수 없어요." });
+    return;
+  }
+
+  const { data: decomps, error: decompsError } = await supabase
+    .from("decompositions")
+    .select("id, round, trigger, created_at")
+    .eq("project_id", id)
+    .order("round", { ascending: false })
+    .limit(3);
+
+  if (decompsError) {
+    res.status(500).json({ error: decompsError.message });
+    return;
+  }
+
+  // 각 decomposition의 단계 수를 조회한다.
+  const decompsWithCount = await Promise.all(
+    (decomps ?? []).map(async (d) => {
+      const { count } = await supabase
+        .from("steps")
+        .select("id", { count: "exact", head: true })
+        .eq("decomposition_id", d.id);
+      return {
+        round: d.round,
+        decompositionId: d.id,
+        trigger: d.trigger,
+        createdAt: d.created_at,
+        stepCount: count ?? 0,
+      };
+    }),
+  );
+
+  res.json({ rounds: decompsWithCount });
+});
+
+// POST /api/projects/:id/rounds/:round/restore — 특정 버전 복원
+// 해당 round의 단계를 새 round로 복사한다 (done 상태는 초기화).
+router.post("/:id/rounds/:round/restore", async (req, res) => {
+  const { id, round } = req.params;
+  const roundNum = Number(round);
+
+  if (!Number.isInteger(roundNum) || roundNum < 1) {
+    res.status(400).json({ error: "올바른 round 번호가 아니에요." });
+    return;
+  }
+
+  const { data: project, error: projectError } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("id", id)
+    .eq("user_id", req.userId)
+    .single();
+
+  if (projectError || !project) {
+    res.status(404).json({ error: "프로젝트를 찾을 수 없어요." });
+    return;
+  }
+
+  // 복원 대상 round의 decomposition 조회
+  const { data: targetDecomp, error: targetError } = await supabase
+    .from("decompositions")
+    .select("id")
+    .eq("project_id", id)
+    .eq("round", roundNum)
+    .single();
+
+  if (targetError || !targetDecomp) {
+    res.status(404).json({ error: "해당 버전을 찾을 수 없어요." });
+    return;
+  }
+
+  // 복원 대상 단계 조회
+  const { data: targetSteps, error: stepsError } = await supabase
+    .from("steps")
+    .select("order_idx, title, description, guide, first_move, unblocker, estimated_minutes, boundary_signal")
+    .eq("decomposition_id", targetDecomp.id)
+    .order("order_idx", { ascending: true });
+
+  if (stepsError) {
+    res.status(500).json({ error: stepsError.message });
+    return;
+  }
+
+  // 현재 최신 round 조회
+  const { data: latestDecomps } = await supabase
+    .from("decompositions")
+    .select("round")
+    .eq("project_id", id)
+    .order("round", { ascending: false })
+    .limit(1);
+
+  const latestRound = latestDecomps?.[0]?.round ?? 0;
+
+  // 새 round 생성
+  const { data: newDecomp, error: newDecompError } = await supabase
+    .from("decompositions")
+    .insert({ project_id: id, round: latestRound + 1, trigger: "restore" })
+    .select("id")
+    .single();
+
+  if (newDecompError || !newDecomp) {
+    res.status(500).json({ error: newDecompError?.message ?? "복원에 실패했어요." });
+    return;
+  }
+
+  // 단계 복사 (done은 false로 초기화)
+  const { error: insertError } = await supabase.from("steps").insert(
+    (targetSteps ?? []).map((s) => ({
+      decomposition_id: newDecomp.id,
+      order_idx: s.order_idx,
+      title: s.title,
+      description: s.description,
+      guide: s.guide,
+      first_move: s.first_move,
+      unblocker: s.unblocker,
+      estimated_minutes: s.estimated_minutes,
+      boundary_signal: s.boundary_signal,
+      done: false,
+    })),
+  );
+
+  if (insertError) {
+    res.status(500).json({ error: insertError.message });
+    return;
+  }
+
+  res.status(200).json({ ok: true });
+});
+
 router.delete("/:id", async (req, res) => {
   const { id } = req.params;
 

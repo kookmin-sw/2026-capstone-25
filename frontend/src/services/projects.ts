@@ -167,6 +167,33 @@ export async function editSteps(projectId: string, steps: { id?: string; title: 
   }
 }
 
+// 프로젝트 버전(round) 목록을 조회한다 — 최신 3개.
+export type RoundInfo = {
+  round: number;
+  decompositionId: string;
+  trigger: string;
+  createdAt: string;
+  stepCount: number;
+};
+
+export async function listRounds(projectId: string): Promise<RoundInfo[]> {
+  const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/rounds`, {
+    headers: await authHeaders(),
+  });
+  if (!response.ok) throw new Error("버전 목록을 불러오지 못했어요.");
+  const data = (await response.json()) as { rounds: RoundInfo[] };
+  return data.rounds;
+}
+
+// 특정 round를 최신으로 복원한다 — 해당 round의 단계가 새 round로 복사된다.
+export async function restoreRound(projectId: string, round: number): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/rounds/${round}/restore`, {
+    method: "POST",
+    headers: await authHeaders(),
+  });
+  if (!response.ok) throw new Error("버전 복원에 실패했어요.");
+}
+
 // 단계 완료 여부를 토글한다. done: true → 완료, false → 미완료.
 export async function toggleStep(id: string, done: boolean) {
   const response = await fetch(`${API_BASE_URL}/api/steps/${id}`, {
