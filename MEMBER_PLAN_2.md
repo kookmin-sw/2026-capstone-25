@@ -105,8 +105,8 @@
 - [x] StepCard 예상 시간 적응형 표시 — 60분 미만 분, 720분 미만 시간, 5400분 미만 일, 그 이상 주
 - [x] StepCard description 펼침 시 전체 표시 (`line-clamp-1` ↔ `whitespace-pre-wrap` 토글)
 - [x] Supabase prod에 003·004 마이그레이션 적용 (J12 배포 단계에서 함께 실행 가능)
-- [ ] `onConfirmAction("edit")` — 결과 화면 인라인 편집 모드 진입(저장 전 메모리 내 단계 상태 편집: 단계 추가/삭제/제목 수정/순서 변경). 편집 완료 후 "확정하기" 시 편집된 단계로 `createProject` 호출
-- [ ] 편집 UI는 J7의 `StepEditor` 컴포넌트를 공용 위치(`components/edit/StepEditor.tsx` 등)에서 재사용 — 결과/상세 두 화면이 동일 컴포넌트 사용
+- [x] `onConfirmAction("edit")` — 결과 화면 인라인 편집 모드 진입(저장 전 메모리 내 단계 상태 편집: 단계 추가/삭제/제목 수정/순서 변경). 편집 완료 후 "확정하기" 시 편집된 단계로 `createProject` 호출
+- [x] 편집 UI는 J7의 `StepEditor` 컴포넌트를 공용 위치(`components/edit/StepEditor.tsx` 등)에서 재사용 — 결과/상세 두 화면이 동일 컴포넌트 사용
 
 ### R7. 2단계 쪼개기 프론트 통합 — **재은**
 
@@ -118,12 +118,19 @@
 | **PR 브랜치** | `feat/sub-decompose-ui` |
 
 **산출물**:
-- [ ] `components/detail/StepRow.tsx` 확장 — 하위 없는 단계에 "2단계 쪼개기" 버튼 노출
-- [ ] `services/decompose.ts`에 `decomposeSub(parentStepId, ...)` 추가 — `/api/decompose/sub` 호출
-- [ ] `components/detail/SubStepBox.tsx` (하위 리스트 박스 — 작은 번호 + 제목 + 상태 + "시작" + 완료 체크)
-- [ ] `backend/src/routes/projects.ts`의 `GET /api/projects/:id`가 트리(`parent_step_id`) 형태로 반환하는지 점검 — 부족하면 보강
-- [ ] 하위 단계 완료 → 본 단계 자동 완료(프론트 계산) + DB 동기화 로직
-- [ ] 하위 단계가 있는 단계는 카드 액션 버튼이 "세부 단계 수정"으로 변경(§10.3.3)
+- [x] `components/detail/StepRow.tsx` 확장 — 하위 없는 단계에 "2단계 쪼개기" 버튼 노출
+- [x] `services/decompose.ts`에 `decomposeSub(parentStepId, ...)` 추가 — `/api/decompose/sub` 호출
+- [x] `components/detail/SubStepBox.tsx` (하위 리스트 박스 — 작은 번호 + 제목 + 상태 + "시작" + 완료 체크)
+- [x] `backend/src/routes/projects.ts`의 `GET /api/projects/:id`가 트리(`parent_step_id`) 형태로 반환하는지 점검 — 부족하면 보강
+- [x] 하위 단계 완료 → 본 단계 자동 완료(프론트 계산) + DB 동기화 로직
+- [x] 하위 단계가 있는 단계는 카드 액션 버튼이 "세부 단계 수정"으로 변경(§10.3.3)
+- [x] 결과 화면에서도 2차 쪼개기 가능 — 메모리 트리에 누적, "확정하기" 시점에 1·2차 함께 저장. 자식 박스에 "전체 취소" 버튼. 2차 쪼개기는 "돌리기" 슬롯 비소비, 재분해 시 자식 폐기 confirm 경고
+- [x] `StepEditor` 트리 편집기로 재설계 — 1·2차 들여쓰기 편집(자식별 ▲/▼·삭제·"하위 단계 추가"). 결과·상세 공용
+- [x] 상세 화면도 동일 UX — `SubStepBox` "전체 취소" 버튼, "수정하기" 시 트리 편집 모드 진입
+- [x] 백엔드 트리 저장 — `CreateStepSchema`/`EditStepsSchema` 재귀화, `POST /api/projects`·`PATCH /:id/steps`에서 부모 returning id로 자식 `parent_step_id` 연결. 편집 시 가이드/예상시간/`done` 플래그 보존
+- [x] 백엔드 `DELETE /api/projects/:projectId/sub-steps/:parentStepId` 신규 — 자식 통째 삭제. 프론트 `deleteSubSteps`로 호출
+- [x] 결과 화면 sessionStorage 캐시 — F5 시 같은 입력이면 AI 재호출 건너뛰고 직전 결과 복구. 저장 성공 시 폐기
+- [x] 확정 후 `navigate("/all", { replace: true })` — 뒤로가기로 /result 재진입해 의도치 않은 AI 재호출/중복 저장 방지
 
 ### R8. RefineBlock 피드백 입력 + 이전 버전 히스토리 — **재은**
 
