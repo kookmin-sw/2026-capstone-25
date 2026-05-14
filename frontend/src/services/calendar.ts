@@ -32,15 +32,27 @@ export type CalendarAssignment = {
   };
 };
 
-// 날짜 범위의 배정 목록 조회
-export async function listAssignments(from: string, to: string): Promise<CalendarAssignment[]> {
+// 해당 기간 내 마감일이 있는 프로젝트 (D-Day 뱃지용)
+export type DueProject = {
+  id: string;
+  title: string;
+  color: string | null;
+  due: string; // YYYY-MM-DD
+};
+
+export type CalendarData = {
+  assignments: CalendarAssignment[];
+  dueProjects: DueProject[];
+};
+
+// 날짜 범위의 배정 목록 + 마감일 프로젝트 조회
+export async function listAssignments(from: string, to: string): Promise<CalendarData> {
   const response = await fetch(
     `${API_BASE_URL}/api/calendar?from=${from}&to=${to}`,
     { headers: await authHeaders() },
   );
   if (!response.ok) throw new Error("일정을 불러오지 못했어요.");
-  const data = (await response.json()) as { assignments: CalendarAssignment[] };
-  return data.assignments;
+  return (await response.json()) as CalendarData;
 }
 
 // 단계를 날짜에 배정
