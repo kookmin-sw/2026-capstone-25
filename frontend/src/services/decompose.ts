@@ -32,4 +32,40 @@ export async function decompose(input: DecomposeRequest): Promise<DecomposeApiRe
   return DecomposeApiResponseSchema.parse(json);
 }
 
+// 2차 분해 — 부모 단계 하나를 그 안에서 다시 끊는다.
+// 백엔드 SubDecomposeRequestSchema 모양에 맞춰 snake_case로 변환해 보낸다.
+export type SubDecomposeInput = {
+  parentStepId: string;
+  parentStepTitle: string;
+  parentStepDescription: string;
+  parentGoal: string;
+  memo?: string;
+};
+
+export async function decomposeSub(input: SubDecomposeInput): Promise<DecomposeApiResponse> {
+  const body = {
+    parent: {
+      step_id: input.parentStepId,
+      step_title: input.parentStepTitle,
+      step_description: input.parentStepDescription,
+      parent_goal: input.parentGoal,
+    },
+    memo: input.memo,
+  };
+
+  const response = await fetch(`${API_BASE_URL}/api/decompose/sub`, {
+    method: "POST",
+    headers: await authHeaders(),
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`2단계 쪼개기에 실패했어요. (${response.status}) ${detail}`);
+  }
+
+  const json = (await response.json()) as unknown;
+  return DecomposeApiResponseSchema.parse(json);
+}
+
 export type { DecomposeApiResponse, DecomposeRequest } from "../schemas/decompose";

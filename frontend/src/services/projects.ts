@@ -51,6 +51,7 @@ export async function listProjects() {
 
 export type StepDetail = {
   id: string;
+  parentStepId: string | null;
   orderIdx: number;
   title: string;
   done: boolean;
@@ -102,6 +103,7 @@ export async function deleteProject(id: string) {
 
 // POST /api/projects 요청 본문 — 백엔드 CreateProjectSchema와 모양이 같아야 한다.
 // 한쪽을 바꿀 때 양쪽을 함께 갱신할 것 (backend/src/schemas/project.ts).
+// children: 결과 화면에서 만든 2차 분해 결과. 깊이는 2차까지(자식은 children을 갖지 않음).
 export type CreateStepInput = {
   title: string;
   description?: string;
@@ -110,6 +112,7 @@ export type CreateStepInput = {
   unblocker?: string;
   estimatedMinutes?: number; // 백엔드는 positive int — 0/음수는 보내지 말 것
   boundarySignal?: string;
+  children?: CreateStepInput[];
 };
 
 export type CreateProjectInput = {
@@ -154,8 +157,40 @@ export async function createProject(input: CreateProjectInput): Promise<{ id: st
   return (await response.json()) as { id: string };
 }
 
-// 단계 목록을 편집 저장한다 — 새 round decomposition을 생성한다.
-export async function editSteps(projectId: string, steps: { id?: string; title: string }[]) {
+// 2차 분해 결과를 부모 단계 밑에 저장한다.
+// 기존 하위가 있으면 통째로 교체된다(재분해 시나리오).
+export async function saveSubSteps(
+  projectId: string,
+  parentStepId: string,
+  steps: CreateStepInput[],
+) {
+  const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/sub-steps`, {
+    method: "POST",
+    headers: await authHeaders(),
+    body: JSON.stringify({ parentStepId, steps }),
+  });
+
+  if (!response.ok) {
+    let detail = "";
+    try {
+      const data = (await response.json()) as { error?: unknown };
+      if (typeof data.error === "string") detail = data.error;
+    } catch {
+      // ignore
+    }
+    throw new Error(detail || "하위 단계를 저장하지 못했어요.");
+  }
+}
+
+// 단계 인라인 편집 — 트리 구조(1차 + 자식 children)를 그대로 보낸다.
+// 백엔드는 새 round decomposition을 생성하고 부모→자식 순으로 insert (parent_step_id 연결).
+export type EditStepInput = {
+  id?: string;
+  title: string;
+  children?: EditStepInput[];
+};
+
+export async function editSteps(projectId: string, steps: EditStepInput[]) {
   const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/steps`, {
     method: "PATCH",
     headers: await authHeaders(),
@@ -192,6 +227,28 @@ export async function restoreRound(projectId: string, round: number): Promise<vo
     headers: await authHeaders(),
   });
   if (!response.ok) throw new Error("버전 복원에 실패했어요.");
+}
+
+// 특정 부모 단계의 모든 하위 단계 삭제 — 상세 화면 자식 박스의 "전체 취소" 버튼이 호출.
+export async function deleteSubSteps(projectId: string, parentStepId: string) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/projects/${projectId}/sub-steps/${parentStepId}`,
+    {
+      method: "DELETE",
+      headers: await authHeaders(),
+    },
+  );
+
+  if (!response.ok) {
+    let detail = "";
+    try {
+      const data = (await response.json()) as { error?: unknown };
+      if (typeof data.error === "string") detail = data.error;
+    } catch {
+      // ignore
+    }
+    throw new Error(detail || "하위 단계 취소에 실패했어요.");
+  }
 }
 
 // 단계 완료 여부를 토글한다. done: true → 완료, false → 미완료.

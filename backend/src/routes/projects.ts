@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { authMiddleware } from "../middleware/auth.js";
 import { supabase } from "../lib/supabase.js";
-import { CreateProjectSchema, CreateStepSchema, EditStepsSchema } from "../schemas/project.js";
+import { CreateProjectSchema, CreateStepSchema, CreateSubStepsSchema, EditStepsSchema } from "../schemas/project.js";
 
 // 전체 탭에서 쓰는 프로젝트 API.
 // 프로젝트 생성, 목록 조회, 삭제를 담당한다.
@@ -29,6 +29,7 @@ type StepRow = {
 };
 
 type StepDetailRow = StepRow & {
+  parent_step_id: string | null;
   description: string | null;
   guide: string | null;
   first_move: string | null;
@@ -111,7 +112,6 @@ router.get("/", async (req, res) => {
 
       return {
         id: project.id,
-        // 사용자 입력 제목을 우선 노출. 마이그레이션 004 이전 row는 title이 NULL이라 goal로 fallback.
         title: project.title ?? project.goal,
         memo: project.memo,
         color: project.color,
@@ -167,7 +167,7 @@ router.get("/:id", async (req, res) => {
   if (decompositionId) {
     const { data: stepData, error: stepsError } = await supabase
       .from("steps")
-      .select("id, decomposition_id, order_idx, title, done, estimated_minutes, description, guide, first_move, unblocker, boundary_signal")
+      .select("id, decomposition_id, parent_step_id, order_idx, title, done, estimated_minutes, description, guide, first_move, unblocker, boundary_signal")
       .eq("decomposition_id", decompositionId)
       .order("order_idx", { ascending: true });
 
@@ -179,13 +179,13 @@ router.get("/:id", async (req, res) => {
     steps.push(...((stepData ?? []) as StepDetailRow[]));
   }
 
-  const doneCount = steps.filter((s) => s.done).length;
-  const totalCount = steps.length;
+  const topLevelSteps = steps.filter((s) => s.parent_step_id === null);
+  const doneCount = topLevelSteps.filter((s) => s.done).length;
+  const totalCount = topLevelSteps.length;
   const progress = totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100);
 
   res.json({
     id: project.id,
-    // 사용자 입력 제목 우선. 마이그레이션 004 이전 row는 NULL이라 goal로 fallback.
     title: project.title ?? project.goal,
     memo: project.memo,
     color: project.color,
@@ -197,6 +197,7 @@ router.get("/:id", async (req, res) => {
     totalCount,
     steps: steps.map((s) => ({
       id: s.id,
+      parentStepId: s.parent_step_id,
       orderIdx: s.order_idx,
       title: s.title,
       done: s.done,
@@ -265,30 +266,72 @@ router.post("/", async (req, res) => {
   const steps: z.infer<typeof CreateStepSchema>[] =
     input.steps.length > 0 ? input.steps : [{ title: input.goal }];
 
-  const { error: stepsError } = await supabase.from("steps").insert(
-    steps.map((step, index) => ({
-      decomposition_id: decomposition.id,
-      order_idx: index,
-      title: step.title,
-      description: step.description,
-      guide: step.guide,
-      first_move: step.firstMove,
-      unblocker: step.unblocker,
-      estimated_minutes: step.estimatedMinutes,
-      boundary_signal: step.boundarySignal,
-    })),
-  );
+  const { data: insertedParents, error: stepsError } = await supabase
+    .from("steps")
+    .insert(
+      steps.map((step, index) => ({
+        decomposition_id: decomposition.id,
+        order_idx: index,
+        title: step.title,
+        description: step.description,
+        guide: step.guide,
+        first_move: step.firstMove,
+        unblocker: step.unblocker,
+        estimated_minutes: step.estimatedMinutes,
+        boundary_signal: step.boundarySignal,
+      })),
+    )
+    .select("id");
 
-  if (stepsError) {
-    res.status(500).json({ error: stepsError.message });
+  if (stepsError || !insertedParents) {
+    res.status(500).json({ error: stepsError?.message ?? "Failed to insert steps" });
     return;
+  }
+
+  const childRows: Array<{
+    decomposition_id: string;
+    parent_step_id: string;
+    order_idx: number;
+    title: string;
+    description?: string;
+    guide?: string;
+    first_move?: string;
+    unblocker?: string;
+    estimated_minutes?: number;
+    boundary_signal?: string;
+  }> = [];
+  let nextChildOrderIdx = steps.length;
+  steps.forEach((parent, parentIdx) => {
+    const parentDbId = insertedParents[parentIdx]?.id;
+    if (!parentDbId || !parent.children?.length) return;
+    for (const child of parent.children) {
+      childRows.push({
+        decomposition_id: decomposition.id,
+        parent_step_id: parentDbId,
+        order_idx: nextChildOrderIdx++,
+        title: child.title,
+        description: child.description,
+        guide: child.guide,
+        first_move: child.firstMove,
+        unblocker: child.unblocker,
+        estimated_minutes: child.estimatedMinutes,
+        boundary_signal: child.boundarySignal,
+      });
+    }
+  });
+
+  if (childRows.length > 0) {
+    const { error: childError } = await supabase.from("steps").insert(childRows);
+    if (childError) {
+      res.status(500).json({ error: childError.message });
+      return;
+    }
   }
 
   res.status(201).json({ id: project.id });
 });
 
 // 단계 인라인 편집 — 새 round decomposition을 생성하고 편집된 단계들을 저장한다.
-// 기존 단계 id가 있으면 메타데이터(가이드·설명 등)를 복사하고, 없으면 새 단계로 추가한다.
 router.patch("/:id/steps", async (req, res) => {
   const { id } = req.params;
 
@@ -320,12 +363,11 @@ router.patch("/:id/steps", async (req, res) => {
   const latestRound = latestDecomps?.[0]?.round ?? 0;
   const latestDecompId = latestDecomps?.[0]?.id ?? null;
 
-  // 기존 단계 메타데이터 조회 (id 있는 단계에 복사하기 위해)
   const existingStepMap = new Map<string, StepDetailRow>();
   if (latestDecompId) {
     const { data: existingSteps } = await supabase
       .from("steps")
-      .select("id, decomposition_id, order_idx, title, done, estimated_minutes, description, guide, boundary_signal")
+      .select("id, decomposition_id, parent_step_id, order_idx, title, done, estimated_minutes, description, guide, first_move, unblocker, boundary_signal")
       .eq("decomposition_id", latestDecompId);
     for (const s of (existingSteps ?? []) as StepDetailRow[]) {
       existingStepMap.set(s.id, s);
@@ -343,7 +385,7 @@ router.patch("/:id/steps", async (req, res) => {
     return;
   }
 
-  const stepsToInsert = parsed.data.steps.map((step, index) => {
+  const parentRows = parsed.data.steps.map((step, index) => {
     const existing = step.id ? existingStepMap.get(step.id) : null;
     return {
       decomposition_id: newDecomp.id,
@@ -351,16 +393,64 @@ router.patch("/:id/steps", async (req, res) => {
       title: step.title,
       description: existing?.description ?? null,
       guide: existing?.guide ?? null,
+      first_move: existing?.first_move ?? null,
+      unblocker: existing?.unblocker ?? null,
       boundary_signal: existing?.boundary_signal ?? null,
       estimated_minutes: existing?.estimated_minutes ?? null,
-      done: false,
+      done: existing?.done ?? false,
     };
   });
 
-  const { error: stepsError } = await supabase.from("steps").insert(stepsToInsert);
-  if (stepsError) {
-    res.status(500).json({ error: stepsError.message });
+  const { data: insertedParents, error: stepsError } = await supabase
+    .from("steps")
+    .insert(parentRows)
+    .select("id");
+  if (stepsError || !insertedParents) {
+    res.status(500).json({ error: stepsError?.message ?? "Failed to insert steps" });
     return;
+  }
+
+  const childRows: Array<{
+    decomposition_id: string;
+    parent_step_id: string;
+    order_idx: number;
+    title: string;
+    description: string | null;
+    guide: string | null;
+    first_move: string | null;
+    unblocker: string | null;
+    boundary_signal: string | null;
+    estimated_minutes: number | null;
+    done: boolean;
+  }> = [];
+  let nextChildOrderIdx = parsed.data.steps.length;
+  parsed.data.steps.forEach((parent, parentIdx) => {
+    const parentDbId = insertedParents[parentIdx]?.id;
+    if (!parentDbId || !parent.children?.length) return;
+    for (const child of parent.children) {
+      const existingChild = child.id ? existingStepMap.get(child.id) : null;
+      childRows.push({
+        decomposition_id: newDecomp.id,
+        parent_step_id: parentDbId,
+        order_idx: nextChildOrderIdx++,
+        title: child.title,
+        description: existingChild?.description ?? null,
+        guide: existingChild?.guide ?? null,
+        first_move: existingChild?.first_move ?? null,
+        unblocker: existingChild?.unblocker ?? null,
+        boundary_signal: existingChild?.boundary_signal ?? null,
+        estimated_minutes: existingChild?.estimated_minutes ?? null,
+        done: existingChild?.done ?? false,
+      });
+    }
+  });
+
+  if (childRows.length > 0) {
+    const { error: childError } = await supabase.from("steps").insert(childRows);
+    if (childError) {
+      res.status(500).json({ error: childError.message });
+      return;
+    }
   }
 
   res.status(200).json({ ok: true });
@@ -395,7 +485,6 @@ router.get("/:id/rounds", async (req, res) => {
     return;
   }
 
-  // 각 decomposition의 단계 수를 조회한다.
   const decompsWithCount = await Promise.all(
     (decomps ?? []).map(async (d) => {
       const { count } = await supabase
@@ -438,7 +527,6 @@ router.post("/:id/rounds/:round/restore", async (req, res) => {
     return;
   }
 
-  // 복원 대상 round의 decomposition 조회
   const { data: targetDecomp, error: targetError } = await supabase
     .from("decompositions")
     .select("id")
@@ -451,7 +539,6 @@ router.post("/:id/rounds/:round/restore", async (req, res) => {
     return;
   }
 
-  // 복원 대상 단계 조회
   const { data: targetSteps, error: stepsError } = await supabase
     .from("steps")
     .select("order_idx, title, description, guide, first_move, unblocker, estimated_minutes, boundary_signal")
@@ -463,7 +550,6 @@ router.post("/:id/rounds/:round/restore", async (req, res) => {
     return;
   }
 
-  // 현재 최신 round 조회
   const { data: latestDecomps } = await supabase
     .from("decompositions")
     .select("round")
@@ -473,7 +559,6 @@ router.post("/:id/rounds/:round/restore", async (req, res) => {
 
   const latestRound = latestDecomps?.[0]?.round ?? 0;
 
-  // 새 round 생성
   const { data: newDecomp, error: newDecompError } = await supabase
     .from("decompositions")
     .insert({ project_id: id, round: latestRound + 1, trigger: "restore" })
@@ -485,7 +570,6 @@ router.post("/:id/rounds/:round/restore", async (req, res) => {
     return;
   }
 
-  // 단계 복사 (done은 false로 초기화)
   const { error: insertError } = await supabase.from("steps").insert(
     (targetSteps ?? []).map((s) => ({
       decomposition_id: newDecomp.id,
@@ -507,6 +591,151 @@ router.post("/:id/rounds/:round/restore", async (req, res) => {
   }
 
   res.status(200).json({ ok: true });
+});
+
+// 2차 분해 결과(하위 단계)를 부모 단계의 decomposition_id에 누적 insert 한다.
+// 본인 프로젝트인지 + parentStepId가 그 프로젝트에 속하는지 검증한다.
+router.post("/:projectId/sub-steps", async (req, res) => {
+  const { projectId } = req.params;
+  const parsed = CreateSubStepsSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: z.flattenError(parsed.error) });
+    return;
+  }
+
+  const { data: project, error: projectError } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("id", projectId)
+    .eq("user_id", req.userId)
+    .single();
+
+  if (projectError || !project) {
+    res.status(404).json({ error: "프로젝트를 찾을 수 없어요." });
+    return;
+  }
+
+  const { data: latestDecomp } = await supabase
+    .from("decompositions")
+    .select("id")
+    .eq("project_id", projectId)
+    .order("round", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const decompositionId = latestDecomp?.id;
+  if (!decompositionId) {
+    res.status(400).json({ error: "이 프로젝트에 분해 결과가 없어요." });
+    return;
+  }
+
+  const { data: parentStep, error: parentError } = await supabase
+    .from("steps")
+    .select("id, decomposition_id, parent_step_id")
+    .eq("id", parsed.data.parentStepId)
+    .eq("decomposition_id", decompositionId)
+    .single();
+
+  if (parentError || !parentStep) {
+    res.status(404).json({ error: "부모 단계를 찾을 수 없어요." });
+    return;
+  }
+
+  if (parentStep.parent_step_id !== null) {
+    res.status(400).json({ error: "2차까지만 분해할 수 있어요." });
+    return;
+  }
+
+  const { error: deleteError } = await supabase
+    .from("steps")
+    .delete()
+    .eq("parent_step_id", parsed.data.parentStepId);
+
+  if (deleteError) {
+    res.status(500).json({ error: deleteError.message });
+    return;
+  }
+
+  const { data: maxOrderRow } = await supabase
+    .from("steps")
+    .select("order_idx")
+    .eq("decomposition_id", decompositionId)
+    .order("order_idx", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const baseOrderIdx = (maxOrderRow?.order_idx ?? -1) + 1;
+
+  const stepsToInsert = parsed.data.steps.map((step, index) => ({
+    decomposition_id: decompositionId,
+    parent_step_id: parsed.data.parentStepId,
+    order_idx: baseOrderIdx + index,
+    title: step.title,
+    description: step.description,
+    guide: step.guide,
+    first_move: step.firstMove,
+    unblocker: step.unblocker,
+    estimated_minutes: step.estimatedMinutes,
+    boundary_signal: step.boundarySignal,
+  }));
+
+  const { error: insertError } = await supabase.from("steps").insert(stepsToInsert);
+  if (insertError) {
+    res.status(500).json({ error: insertError.message });
+    return;
+  }
+
+  res.status(201).json({ ok: true, count: stepsToInsert.length });
+});
+
+// 특정 부모 단계의 모든 하위 단계 삭제 — "전체 취소" 버튼이 호출.
+router.delete("/:projectId/sub-steps/:parentStepId", async (req, res) => {
+  const { projectId, parentStepId } = req.params;
+
+  const { data: project, error: projectError } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("id", projectId)
+    .eq("user_id", req.userId)
+    .single();
+  if (projectError || !project) {
+    res.status(404).json({ error: "프로젝트를 찾을 수 없어요." });
+    return;
+  }
+
+  const { data: latestDecomp } = await supabase
+    .from("decompositions")
+    .select("id")
+    .eq("project_id", projectId)
+    .order("round", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!latestDecomp?.id) {
+    res.status(400).json({ error: "이 프로젝트에 분해 결과가 없어요." });
+    return;
+  }
+
+  const { data: parentStep, error: parentError } = await supabase
+    .from("steps")
+    .select("id")
+    .eq("id", parentStepId)
+    .eq("decomposition_id", latestDecomp.id)
+    .single();
+  if (parentError || !parentStep) {
+    res.status(404).json({ error: "부모 단계를 찾을 수 없어요." });
+    return;
+  }
+
+  const { error: deleteError } = await supabase
+    .from("steps")
+    .delete()
+    .eq("parent_step_id", parentStepId);
+  if (deleteError) {
+    res.status(500).json({ error: deleteError.message });
+    return;
+  }
+
+  res.status(204).send();
 });
 
 router.delete("/:id", async (req, res) => {

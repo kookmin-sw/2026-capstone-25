@@ -1,12 +1,28 @@
 // 프로젝트 상세 페이지 — 진행률 카드 + 단계 목록 + 하단 액션(수정·삭제·목록으로).
 // isEditing 모드에서는 StepEditor로 단계를 편집하고 저장 시 새 round decomposition을 생성한다.
+// 2차 분해: 1차 단계의 "2단계 쪼개기" → decomposeSub → saveSubSteps → 재조회.
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ChevronLeft, Trash2 } from "lucide-react";
 import ProgressCard from "../components/detail/ProgressCard";
 import StepRow from "../components/detail/StepRow";
 import StepEditor, { type EditableStep } from "../components/edit/StepEditor";
-import { deleteProject, editSteps, getProject, listRounds, restoreRound, toggleStep, type ProjectDetail, type RoundInfo, type StepDetail } from "../services/projects";
+import {
+  deleteProject,
+  deleteSubSteps,
+  editSteps,
+  getProject,
+  listRounds,
+  restoreRound,
+  saveSubSteps,
+  toggleStep,
+  type CreateStepInput,
+  type EditStepInput,
+  type ProjectDetail,
+  type RoundInfo,
+  type StepDetail,
+} from "../services/projects";
+import { decomposeSub } from "../services/decompose";
 
 // YYYY-MM-DD → D-day 문자열 계산
 function getDdayText(due: string | null): string {
@@ -19,10 +35,11 @@ function getDdayText(due: string | null): string {
   return diff > 0 ? `D-${diff}` : `D+${Math.abs(diff)}`;
 }
 
-// steps 배열로 진행률을 재계산한다
+// steps 배열로 진행률을 재계산한다. 1차 단계(부모 없음)만 카운트한다.
 function calcProgress(steps: StepDetail[]) {
-  const total = steps.length;
-  const done = steps.filter((s) => s.done).length;
+  const topLevel = steps.filter((s) => s.parentStepId === null);
+  const total = topLevel.length;
+  const done = topLevel.filter((s) => s.done).length;
   return {
     doneCount: done,
     totalCount: total,
@@ -48,6 +65,9 @@ export default function ProjectDetailPage() {
   const [isLoadingRounds, setIsLoadingRounds] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
 
+  // 2차 분해 호출 중인 부모 step id — 해당 카드의 "2단계 쪼개기" 버튼만 비활성
+  const [busySubParentId, setBusySubParentId] = useState<string | null>(null);
+
   useEffect(() => {
     if (!id) return;
     setStatus("loading");
@@ -60,28 +80,128 @@ export default function ProjectDetailPage() {
   }, [id]);
 
   // 단계 완료 토글 — 낙관적 UI: 클릭 즉시 로컬 상태를 바꾸고 PATCH를 백그라운드로 보낸다.
-  // 실패하면 원래 상태로 되돌린다.
+  // 자식 단계 토글 시 형제 상태로 부모 done을 재계산해 같이 동기화한다 (§10.3.5).
   async function handleToggle(stepId: string, done: boolean) {
     if (!project) return;
 
     const prevSteps = project.steps;
-    const nextSteps = prevSteps.map((s) => s.id === stepId ? { ...s, done } : s);
+    const toggled = prevSteps.find((s) => s.id === stepId);
+    if (!toggled) return;
+
+    let nextSteps = prevSteps.map((s) => s.id === stepId ? { ...s, done } : s);
+
+    // 자식 단계라면 형제 done 비율로 부모 done을 결정한다.
+    // 자식 모두 done → 부모 done=true, 하나라도 미완료 → 부모 done=false
+    let parentSyncId: string | null = null;
+    let parentSyncDone = false;
+    if (toggled.parentStepId) {
+      const siblings = nextSteps.filter((s) => s.parentStepId === toggled.parentStepId);
+      const allDone = siblings.every((s) => s.done);
+      const parent = nextSteps.find((s) => s.id === toggled.parentStepId);
+      if (parent && parent.done !== allDone) {
+        parentSyncId = parent.id;
+        parentSyncDone = allDone;
+        nextSteps = nextSteps.map((s) => s.id === parentSyncId ? { ...s, done: allDone } : s);
+      }
+    }
 
     setProject({ ...project, ...calcProgress(nextSteps), steps: nextSteps });
 
     try {
       await toggleStep(stepId, done);
+      if (parentSyncId) {
+        await toggleStep(parentSyncId, parentSyncDone);
+      }
     } catch {
       // 실패 시 롤백
       setProject({ ...project, steps: prevSteps });
     }
   }
 
-  // 편집 모드 진입 — 현재 단계를 EditableStep 형태로 복사
+  // 2차 분해 — 부모 단계 하나를 AI로 다시 쪼개서 DB에 누적 저장한다.
+  async function handleSubDecompose(parent: StepDetail) {
+    if (!project || !id || busySubParentId) return;
+    setBusySubParentId(parent.id);
+    try {
+      const aiResponse = await decomposeSub({
+        parentStepId: parent.id,
+        parentStepTitle: parent.title,
+        parentStepDescription: parent.description ?? "",
+        parentGoal: project.title,
+      });
+
+      // AI 응답 → CreateStepInput[] 매핑. parent_step_id는 백엔드가 무시한다(parentStepId 본문에서 받음).
+      const stepsToSave: CreateStepInput[] = aiResponse.result.steps.map((s) => ({
+        title: s.title,
+        description: s.description || undefined,
+        guide: s.guide || undefined,
+        firstMove: s.first_move || undefined,
+        unblocker: s.unblocker || undefined,
+        estimatedMinutes: s.estimated_minutes > 0 ? s.estimated_minutes : undefined,
+        boundarySignal: s.boundary_signal || undefined,
+      }));
+
+      await saveSubSteps(id, parent.id, stepsToSave);
+      const updated = await getProject(id);
+      setProject(updated);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "2단계 쪼개기에 실패했어요.");
+    } finally {
+      setBusySubParentId(null);
+    }
+  }
+
+  // "세부 단계 수정" — 전체 단계 인라인 편집 모드 진입(§10.3.3 표 ② "세부 단계 수정").
+  // 결과 화면과 동일하게 1·2차를 들여쓰기로 펼쳐 편집한다.
+  function handleEditSubSteps(_parent: StepDetail) {
+    handleEditStart();
+  }
+
+  // 특정 부모 단계의 하위 단계 전체 폐기 — SubStepBox의 "전체 취소" 버튼이 호출.
+  // 낙관적 UI: 화면에서 즉시 자식 제거 후 DELETE. 실패 시 재조회로 복구.
+  async function handleCancelSubSteps(parent: StepDetail) {
+    if (!project || !id) return;
+    const prevSteps = project.steps;
+    const nextSteps = prevSteps.filter((s) => s.parentStepId !== parent.id);
+    setProject({ ...project, ...calcProgress(nextSteps), steps: nextSteps });
+
+    try {
+      await deleteSubSteps(id, parent.id);
+    } catch {
+      // 실패 시 서버 상태로 복구
+      try {
+        const updated = await getProject(id);
+        setProject(updated);
+      } catch {
+        // 재조회도 실패하면 직전 state로 롤백
+        setProject({ ...project, steps: prevSteps });
+      }
+    }
+  }
+
+  // 편집 모드 진입 — 1·2차 트리를 EditableStep 트리로 복사(결과 화면과 동일한 시그니처).
   function handleEditStart() {
     if (!project) return;
+    const childrenByParent = new Map<string, StepDetail[]>();
+    for (const s of project.steps) {
+      if (!s.parentStepId) continue;
+      const list = childrenByParent.get(s.parentStepId) ?? [];
+      list.push(s);
+      childrenByParent.set(s.parentStepId, list);
+    }
     setEditableSteps(
-      project.steps.map((s) => ({ id: s.id, tempId: s.id, title: s.title })),
+      project.steps
+        .filter((s) => s.parentStepId === null)
+        .map((s) => ({
+          id: s.id,
+          tempId: s.id,
+          title: s.title,
+          children: (childrenByParent.get(s.id) ?? []).map((c) => ({
+            id: c.id,
+            tempId: c.id,
+            title: c.title,
+          })),
+        })),
     );
     setIsEditing(true);
   }
@@ -92,16 +212,27 @@ export default function ProjectDetailPage() {
     setEditableSteps([]);
   }
 
-  // 편집 저장 — 빈 제목 검사 후 PATCH 호출, 성공 시 최신 데이터 재조회
+  // 편집 저장 — 빈 제목(자식 포함) 검사 후 PATCH 호출, 성공 시 최신 데이터 재조회.
+  // 트리(1차 + children) 그대로 백엔드에 전달 — 새 round decomposition에 부모·자식 모두 새로 insert.
   async function handleEditSave() {
     if (!project || !id) return;
-    if (editableSteps.some((s) => !s.title.trim())) {
+    const emptyTitle = editableSteps.some(
+      (s) => !s.title.trim() || (s.children ?? []).some((c) => !c.title.trim()),
+    );
+    if (emptyTitle) {
       alert("단계 제목을 모두 입력해 주세요.");
       return;
     }
     setIsSaving(true);
     try {
-      await editSteps(id, editableSteps.map((s) => ({ id: s.id, title: s.title.trim() })));
+      const payload: EditStepInput[] = editableSteps.map((s) => {
+        const kids = s.children ?? [];
+        const base: EditStepInput = { id: s.id, title: s.title.trim() };
+        return kids.length > 0
+          ? { ...base, children: kids.map((c) => ({ id: c.id, title: c.title.trim() })) }
+          : base;
+      });
+      await editSteps(id, payload);
       const updated = await getProject(id);
       setProject(updated);
       setIsEditing(false);
@@ -190,8 +321,18 @@ export default function ProjectDetailPage() {
     );
   }
 
-  // 다음 단계 = 완료되지 않은 첫 번째 단계
-  const nextStepId = project.steps.find((s) => !s.done)?.id ?? null;
+  // 1차 단계 = parentStepId가 없는 단계. 자식 단계는 parent_step_id로 묶어 SubStepBox에 전달.
+  const topLevelSteps = project.steps.filter((s) => s.parentStepId === null);
+  const childrenByParent = new Map<string, StepDetail[]>();
+  for (const s of project.steps) {
+    if (!s.parentStepId) continue;
+    const list = childrenByParent.get(s.parentStepId) ?? [];
+    list.push(s);
+    childrenByParent.set(s.parentStepId, list);
+  }
+
+  // 다음 단계 = 1차 단계 중 미완료 첫 번째
+  const nextStepId = topLevelSteps.find((s) => !s.done)?.id ?? null;
   const ddayText = getDdayText(project.due);
 
   return (
@@ -233,14 +374,19 @@ export default function ProjectDetailPage() {
           <StepEditor steps={editableSteps} onChange={setEditableSteps} busy={isSaving} />
         ) : (
           <div className="space-y-2.5">
-            {project.steps.map((step, i) => (
+            {topLevelSteps.map((step, i) => (
               <StepRow
                 key={step.id}
                 step={step}
                 index={i}
                 isNext={step.id === nextStepId}
                 color={project.color}
+                subSteps={childrenByParent.get(step.id) ?? []}
+                busySubDecompose={busySubParentId === step.id}
                 onToggle={handleToggle}
+                onSubDecompose={handleSubDecompose}
+                onEditSubSteps={handleEditSubSteps}
+                onCancelSubSteps={handleCancelSubSteps}
               />
             ))}
           </div>
