@@ -6,13 +6,12 @@ import { X } from "lucide-react";
 import { deleteAssignment, patchAssignment, type CalendarAssignment } from "../../services/calendar";
 
 type Props = {
-  date: string;
   assignments: CalendarAssignment[];
   onDelete: (id: string) => void;
   onPriorityChange: (id: string, priority: number) => void;
 };
 
-export default function DayList({ date, assignments, onDelete, onPriorityChange }: Props) {
+export default function DayList({ assignments, onDelete, onPriorityChange }: Props) {
   // priority ASC 정렬
   const sorted = [...assignments].sort((a, b) => a.priority - b.priority);
 
@@ -36,19 +35,8 @@ export default function DayList({ date, assignments, onDelete, onPriorityChange 
     await deleteAssignment(id).catch(() => {});
   }
 
-  // 날짜를 한국어로 표시 — "5월 13일 (화)"
-  const label = (() => {
-    const d = new Date(`${date}T00:00:00`);
-    const month = d.getMonth() + 1;
-    const day = d.getDate();
-    const weekDay = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
-    return `${month}월 ${day}일 (${weekDay})`;
-  })();
-
   return (
-    <div className="flex-1 px-4 pt-2 pb-6">
-      <p className="text-xs font-bold text-mu mb-3">{label}</p>
-
+    <div className="flex-1">
       {sorted.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 gap-2">
           <span className="text-3xl">📭</span>
