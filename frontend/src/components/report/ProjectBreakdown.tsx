@@ -8,9 +8,9 @@ function fmtTime(mins: number): string {
   return m > 0 ? `${h}시간 ${m}분` : `${h}시간`;
 }
 
-type Props = { projects: ProjectReport[] };
+type Props = { projects: ProjectReport[]; projectFlows?: Record<string, string> | null };
 
-export default function ProjectBreakdown({ projects }: Props) {
+export default function ProjectBreakdown({ projects, projectFlows }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
   const sorted = [...projects].sort((a, b) => b.timeSpent - a.timeSpent);
   const maxTime = Math.max(...sorted.map((p) => p.timeSpent), 1);
@@ -58,8 +58,14 @@ export default function ProjectBreakdown({ projects }: Props) {
                       style={{ width: `${barW}%`, background: accentColor }}
                     />
                   </div>
+                  {/* AI 흐름 상태 */}
+                  {projectFlows?.[p.title] && (
+                    <p className="text-[10.5px] font-semibold mt-1.5" style={{ color: "var(--color-ac-d)" }}>
+                      {projectFlows[p.title]}
+                    </p>
+                  )}
                   {/* 마감 페이스 */}
-                  {p.pacePrediction && (
+                  {!projectFlows && p.pacePrediction && (
                     <p className="text-[10.5px] text-mu font-semibold mt-1.5">
                       {p.pacePrediction}
                     </p>

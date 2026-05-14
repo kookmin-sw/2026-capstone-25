@@ -268,16 +268,17 @@
 | **PR 브랜치** | `feat/report-tab` |
 
 **산출물**:
-- [ ] `backend/src/routes/report.ts` — `GET /api/report/weekly` (집계 쿼리: steps.time_spent · done · 프로젝트 그룹핑)
-- [ ] `pages/ReportPage.tsx` 컨테이너
-- [ ] `components/report/WeeklySummary.tsx` — 4주 막대 그래프 (recharts)
-- [ ] `components/report/ProjectBreakdown.tsx` — 프로젝트별 시간 분배 바 + 완료율 (§12.4)
-- [ ] `components/report/AutoComment.tsx` — 규칙 기반 잘한 점/아쉬운 점
-  - "3일 연속 집중" → 칭찬
-  - "주중 갭 24h 이상" → 격려
-  - "이번 주 집중 시간 0분" → 빈 상태 메시지
-- [ ] 의존성 추가: `recharts` (사용자 확인 후)
-- [ ] 빈 상태 — "기록이 쌓이면 여기에 표시돼요"
+- [x] `backend/src/routes/report.ts` — `GET /api/report/weekly` + `POST /api/report/ai-summary` (Claude AI 인사이트)
+- [x] `supabase/migrations/005_report.sql` — `steps.updated_at` 트리거 + `timer_sessions` 테이블 + RLS
+- [x] `backend/src/routes/timer.ts` — 타이머 종료 시 `timer_sessions` 기록
+- [x] `pages/ReportPage.tsx` 컨테이너 — 주간 집계 + AI 분석 병렬 로드, localStorage 캐시
+- [x] `components/report/WeeklySummary.tsx` — 4주 막대 그래프
+- [x] `components/report/ProjectBreakdown.tsx` — 프로젝트별 시간 분배 바 + AI 흐름 상태
+- [x] `components/report/AutoComment.tsx` — AI 헤드라인 + 잘한 점/아쉬운 점
+- [x] `components/report/UserTypeCard.tsx` — AI 작업 스타일 카드
+- [x] `components/report/PatternCards.tsx` — AI 발견 패턴 카드
+- [x] `components/report/NextWeekSuggestion.tsx` — AI 다음 주 전략
+- [x] 빈 상태 — "기록이 쌓이면 여기에 표시돼요"
 
 ### J10. 나(Me) 탭 — 누적 통계 + 히스토리 — **지희**
 

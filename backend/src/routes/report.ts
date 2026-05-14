@@ -1,8 +1,13 @@
 // 리포트 탭 API
-// GET /api/report/weekly — 4주 추이 + 프로젝트별 집계 + 사용자 타입 분석
+// GET  /api/report/weekly     — 4주 추이 + 프로젝트별 집계
+// POST /api/report/ai-summary — 집계 데이터 → Claude 자기이해형 인사이트 생성
 import { Router } from "express";
+import Anthropic from "@anthropic-ai/sdk";
+import { env } from "../env.js";
 import { authMiddleware } from "../middleware/auth.js";
 import { supabase } from "../lib/supabase.js";
+
+const anthropic = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
 
 const router = Router();
 router.use(authMiddleware);
@@ -158,6 +163,109 @@ router.get("/weekly", async (req, res) => {
     projects: projectStats,
     userType,
   });
+});
+
+// ── POST /api/report/ai-summary ─────────────────────────────────────────────
+// 프론트에서 weekly 데이터를 보내면 Claude가 자기이해형 인사이트를 생성해 반환한다.
+router.post("/ai-summary", async (req, res) => {
+  const { weeks, projects } = req.body as {
+    weeks: { label: string; mins: number; done: number }[];
+    projects: { id: string; title: string; progress: number; timeSpent: number; due: string | null; doneCount: number; totalCount: number }[];
+  };
+
+  if (!weeks || !projects) {
+    res.status(400).json({ error: "weeks, projects 데이터가 필요해요." });
+    return;
+  }
+
+  // 타이머 세션 시간대 분포 조회 (hour 0~23 카운트)
+  const fourWeeksAgo = new Date();
+  fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+
+  const { data: sessions } = await supabase
+    .from("timer_sessions")
+    .select("started_at, mins")
+    .eq("user_id", req.userId)
+    .gte("started_at", fourWeeksAgo.toISOString());
+
+  const hourDist: number[] = Array(24).fill(0);
+  for (const s of sessions ?? []) {
+    const h = new Date(s.started_at).getHours();
+    hourDist[h] += s.mins;
+  }
+  const peakHour = hourDist.indexOf(Math.max(...hourDist));
+  const peakLabel =
+    peakHour < 6 ? "새벽" : peakHour < 12 ? "오전" : peakHour < 18 ? "오후" : "저녁·밤";
+
+  // Claude 프롬프트 구성
+  const weeksText = weeks
+    .map((w) => `${w.label}: 집중 ${w.mins}분, 완료 ${w.done}개`)
+    .join(" / ");
+
+  const projectsText = projects
+    .map((p) => {
+      const due = p.due ? `마감 ${p.due}` : "마감 없음";
+      return `- ${p.title}: 진행률 ${p.progress}% (${p.doneCount}/${p.totalCount}단계), 집중 ${p.timeSpent}분, ${due}`;
+    })
+    .join("\n");
+
+  const hasSessions = (sessions ?? []).length > 0;
+  const timeContext = hasSessions
+    ? `집중 시간대: ${peakLabel}(${peakHour}시) 대에 가장 많이 집중했어요.`
+    : "타이머 기록이 아직 없어요.";
+
+  const userPrompt = `사용자의 이번 주 활동 데이터입니다.
+
+## 4주 추이
+${weeksText}
+
+## 프로젝트 현황
+${projectsText}
+
+## 시간대
+${timeContext}
+
+위 데이터를 바탕으로 "자기이해형 리포트"를 JSON으로 작성해주세요.
+데이터가 부족하면 솔직하게 "아직 패턴을 파악하는 중이에요"라고 쓰세요.
+평가가 아닌 관찰 톤으로, 따뜻하고 친근하게 작성해주세요.
+
+반드시 아래 JSON 형식으로만 응답하세요 (다른 텍스트 없이):
+{
+  "headline": "이번 주를 한 문장으로 요약 (20자 이내)",
+  "goods": ["잘한 점 1", "잘한 점 2"],
+  "bads": ["아쉬운 점 1"],
+  "userType": {
+    "type": "작업 스타일 이름 (10자 이내)",
+    "emoji": "이모지 1개",
+    "reason": "왜 이 스타일인지 근거 포함 설명 (2문장 이내)"
+  },
+  "patterns": [
+    { "emoji": "이모지", "title": "패턴 제목", "body": "구체적 관찰 내용 (1~2문장)" }
+  ],
+  "projectFlows": {
+    "프로젝트명": "흐름 상태 한 줄 (예: 안정적으로 진행 중, 마감 압박 진입)"
+  },
+  "strategies": ["행동 전략 1", "행동 전략 2", "행동 전략 3"]
+}`;
+
+  try {
+    const message = await anthropic.messages.create({
+      model: env.ANTHROPIC_MODEL,
+      max_tokens: 1024,
+      messages: [{ role: "user", content: userPrompt }],
+    });
+
+    const text = message.content[0].type === "text" ? message.content[0].text : "";
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      res.status(500).json({ error: "AI 응답 파싱 실패" });
+      return;
+    }
+    const summary = JSON.parse(jsonMatch[0]);
+    res.json(summary);
+  } catch (err) {
+    res.status(500).json({ error: "AI 분석 중 오류가 발생했어요." });
+  }
 });
 
 // 규칙 기반 사용자 타입 분석
