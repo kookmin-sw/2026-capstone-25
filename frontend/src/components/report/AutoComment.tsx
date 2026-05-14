@@ -40,7 +40,7 @@ export default function AutoComment({ weeks, projects }: Props) {
   return (
     <div
       className="rounded-[20px] px-[22px] py-5"
-      style={{ background: "linear-gradient(135deg, #FF7043 0%, #FF9478 100%)" }}
+      style={{ background: "var(--color-ac-grad)" }}
     >
       <p className="text-[11px] font-bold text-white/70 tracking-[0.5px] mb-1.5">
         이번 주 리포트

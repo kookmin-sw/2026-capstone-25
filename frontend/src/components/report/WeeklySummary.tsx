@@ -34,31 +34,42 @@ export default function WeeklySummary({ weeks }: Props) {
         </div>
       </div>
 
-      {/* 막대 차트 */}
-      <div className="flex items-end gap-2 h-[104px]">
+      {/* 막대 차트 — 프로토타입 기준: 막대 13px 고정폭, gap 4px, radius 4 4 2 2 */}
+      <div className="flex items-end justify-between" style={{ height: 104 }}>
         {weeks.map((w, i) => {
           const isNow = i === 3;
-          const mH = Math.max(6, Math.round((w.mins / maxMins) * 90));
-          const dH = Math.max(6, Math.round((w.done / maxDone) * 90));
+          const mH = Math.max(8, Math.round((w.mins / maxMins) * 90));
+          const dH = Math.max(8, Math.round((w.done / maxDone) * 90));
           return (
-            <div key={i} className="flex-1 flex flex-col items-center gap-[3px]">
-              <div className="w-full flex items-end justify-center gap-[3px]" style={{ height: 96 }}>
+            <div key={i} className="flex-1 flex flex-col items-center gap-[6px]">
+              <div className="flex items-end" style={{ height: 94, gap: 4 }}>
+                {/* 집중 막대 */}
                 <div
-                  className="flex-1 rounded-t-[4px] transition-all"
                   style={{
+                    width: 13,
                     height: mH,
-                    background: isNow ? "var(--color-ac)" : "var(--color-ac)33",
+                    background: isNow ? "var(--color-ac-grad)" : "var(--color-ac-s2)",
+                    borderRadius: "4px 4px 2px 2px",
+                    opacity: isNow ? 1 : 0.6,
                   }}
                 />
+                {/* 완료 막대 */}
                 <div
-                  className="flex-1 rounded-t-[4px] transition-all"
                   style={{
+                    width: 13,
                     height: dH,
-                    background: isNow ? "var(--color-tx)" : "var(--color-tx)33",
+                    background: isNow ? "var(--color-tx)" : "var(--color-mu)",
+                    borderRadius: "4px 4px 2px 2px",
+                    opacity: isNow ? 1 : 0.6,
                   }}
                 />
               </div>
-              <span className="text-[10px] text-mu font-semibold">{w.label}</span>
+              <span
+                className="text-[10px] font-bold whitespace-nowrap"
+                style={{ color: isNow ? "var(--color-ac-d)" : "var(--color-mu)" }}
+              >
+                {w.label}
+              </span>
             </div>
           );
         })}

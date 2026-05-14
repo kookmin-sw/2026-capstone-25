@@ -31,6 +31,7 @@
   --color-ac-d: #FF7A58;        /* 강조(텍스트·아이콘) */
   --color-ac-s: #FFF0E8;        /* 옅은 배경(필·활성탭) */
   --color-ac-s2: #FFE1D4;       /* 옅은 보더 */
+  --color-ac-grad: linear-gradient(135deg, #FFB59C 0%, #FF8567 100%); /* hero 그라디언트 */
 
   /* 글자 / 회색조 */
   --color-tx: #3D2F27;          /* 본문 텍스트 */
