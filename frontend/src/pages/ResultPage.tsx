@@ -185,15 +185,6 @@ export default function ResultPage() {
     void runDecompose(next, { pushHistory: true });
   }
 
-  function onRevert() {
-    setHistory((prev) => {
-      if (prev.length === 0) return prev;
-      const last = prev[prev.length - 1];
-      setData(last);
-      return prev.slice(0, -1);
-    });
-  }
-
   // 드롭다운에서 특정 버전을 골라 복원 — 선택한 버전을 화면으로, 현재 결과를 히스토리 끝에 push.
   // 슬롯 상한 MAX_HISTORY 그대로 유지(앞에서 탈락).
   function onRestoreVersion(index: number) {
@@ -204,6 +195,13 @@ export default function ResultPage() {
       setData(target);
       return [...remaining, data].slice(-MAX_HISTORY);
     });
+  }
+
+  // "돌리기" = 드롭다운에서 가장 최근 버전을 고른 것과 동일 — 현재 결과도 히스토리에 보존된다.
+  // 두 경로의 정책을 일치시켜 "최근 N개 결과를 보관 중이에요" 안내의 약속을 지킨다.
+  function onRevert() {
+    if (history.length === 0) return;
+    onRestoreVersion(history.length - 1);
   }
 
   // 2차 분해 — 결과 화면에서 leaf 부모 단계 하나를 쪼개 자식을 같은 steps[] 배열에 누적한다.
