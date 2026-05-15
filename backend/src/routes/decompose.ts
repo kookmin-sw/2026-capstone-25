@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { createHash } from "node:crypto";
 import { z } from "zod";
 import Anthropic from "@anthropic-ai/sdk";
 import { env } from "../env.js";
@@ -20,10 +19,39 @@ import { validate, type ValidationIssue } from "../validate/index.js";
 
 const ATTACHMENTS_BUCKET = "decompose-attachments";
 
-// 같은 분해 세션에서 사용자가 재분해 칩을 누르면 같은 path가 다시 들어온다.
-// path → 파일 hash → Extracted 결과를 모듈 스코프 Map 으로 들고 있어 PDF/DOCX 파싱 CPU 를 절약한다.
-// 프로세스 재시작 시 비워진다 — TTL 불필요.
+// 같은 ResultPage 세션에서 사용자가 재분해 칩(더 잘게/더 크게/피드백)을 누르면 같은 path 가 다시 들어온다.
+// path → Extracted 를 모듈 스코프 LRU Map 으로 들고 있어 Storage 다운로드 + PDF/DOCX 추출 CPU 를 절약한다.
+//
+// 메모리 안전 — Extracted 본체(PDF base64 등 ~6.7MB)가 누적되는 곳이라 상한을 강제한다.
+// LRU 정책: 최근 접근한 항목을 Map 끝으로 옮기고, size 초과 시 가장 오래된 항목(첫 키)을 evict.
+// JavaScript Map 은 삽입 순서를 보존하므로 별도 자료구조 없이 LRU 가능.
+//
+// 프로세스 재시작 시 자연 폐기 — TTL 또는 Cleanup 엔드포인트 불필요.
+const EXTRACT_CACHE_MAX_ENTRIES = 20;
 const extractCache = new Map<string, Extracted>();
+
+function cacheGet(key: string): Extracted | undefined {
+  const v = extractCache.get(key);
+  if (v !== undefined) {
+    // 최근 접근 → Map 끝으로 재삽입 (가장 최근 위치)
+    extractCache.delete(key);
+    extractCache.set(key, v);
+  }
+  return v;
+}
+
+function cacheSet(key: string, value: Extracted): void {
+  if (extractCache.has(key)) {
+    extractCache.delete(key);
+  } else if (extractCache.size >= EXTRACT_CACHE_MAX_ENTRIES) {
+    const oldest = extractCache.keys().next().value;
+    if (oldest !== undefined) {
+      extractCache.delete(oldest);
+      console.log(`[decompose:extract] LRU evict ${oldest.slice(0, 60)}…`);
+    }
+  }
+  extractCache.set(key, value);
+}
 
 const router = Router();
 
@@ -39,14 +67,20 @@ type AnyDecomposeInput =
 type UserContentBlock = Anthropic.Messages.TextBlockParam | Anthropic.Messages.ImageBlockParam | Anthropic.Messages.DocumentBlockParam;
 
 // AttachmentRef → Extracted 변환. Storage 에서 다운로드 후 형식별 추출.
-// 같은 path 가 이미 캐시에 있으면 그대로 재사용 (재분해 시 비용 절감).
+// 같은 path 가 이미 캐시에 있으면 그대로 재사용 (재분해 시 다운로드 + 추출 둘 다 스킵).
+//
+// 정책 — path 키만 사용. 같은 ResultPage 세션 안에서만 캐시 적중을 노린다.
+// 다른 세션에서 같은 파일을 다시 올려도(새 sessionId → 새 path) 캐시 MISS — 새로 추출.
+// 이렇게 두는 이유:
+//   1) 의도 일치: "같은 분해 세션의 재분해 비용 절감"이라는 본래 목적과 정확히 부합
+//   2) 사용자 격리: 사용자 간 메모리 캐시 우연 공유 케이스 제거
+//   3) Cleanup 단순화: hash 역인덱스 불필요
 async function downloadAndExtract(refs: AttachmentRef[]): Promise<Extracted[]> {
   const results: Extracted[] = [];
   for (const ref of refs) {
-    // Storage path 자체를 1차 캐시 키로 쓴다. 같은 path 는 같은 파일이라는 전제(hash-prefixed 객체명).
-    const cached = extractCache.get(ref.path);
+    const cached = cacheGet(ref.path);
     if (cached) {
-      console.log(`[decompose:extract] cache HIT (path) ${ref.filename} → ${ref.path}`);
+      console.log(`[decompose:extract] cache HIT ${ref.filename} → ${ref.path}`);
       results.push(cached);
       continue;
     }
@@ -60,21 +94,9 @@ async function downloadAndExtract(refs: AttachmentRef[]): Promise<Extracted[]> {
     }
 
     const buffer = Buffer.from(await blob.arrayBuffer());
-    // 추가 안전망 — 객체명 prefix 의 hash 와 실제 내용 hash 가 다르면 캐시 키를 내용 기반으로 한 번 더 부여한다.
-    const sha = createHash("sha256").update(buffer).digest("hex");
-    const contentKey = `sha256:${sha}`;
-    const cachedByHash = extractCache.get(contentKey);
-    if (cachedByHash) {
-      console.log(`[decompose:extract] cache HIT (hash) ${ref.filename} → ${sha.slice(0, 12)}…`);
-      extractCache.set(ref.path, cachedByHash);
-      results.push(cachedByHash);
-      continue;
-    }
-
-    console.log(`[decompose:extract] extracting ${ref.filename} (${buffer.length} bytes, sha=${sha.slice(0, 12)}…)`);
+    console.log(`[decompose:extract] extracting ${ref.filename} (${buffer.length} bytes)`);
     const extracted = await extract(buffer, ref.filename, ref.contentType);
-    extractCache.set(ref.path, extracted);
-    extractCache.set(contentKey, extracted);
+    cacheSet(ref.path, extracted);
     results.push(extracted);
   }
   return results;
