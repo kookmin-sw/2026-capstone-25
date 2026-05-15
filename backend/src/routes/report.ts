@@ -6,6 +6,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { env } from "../env.js";
 import { authMiddleware } from "../middleware/auth.js";
 import { supabase } from "../lib/supabase.js";
+import { buildReportUserPrompt } from "../prompts/report-ai.js";
 
 const anthropic = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
 
@@ -214,39 +215,7 @@ router.post("/ai-summary", async (req, res) => {
     ? `집중 시간대: ${peakLabel}(${peakHour}시) 대에 가장 많이 집중했어요.`
     : "타이머 기록이 아직 없어요.";
 
-  const userPrompt = `사용자의 이번 주 활동 데이터입니다.
-
-## 4주 추이
-${weeksText}
-
-## 프로젝트 현황
-${projectsText}
-
-## 시간대
-${timeContext}
-
-위 데이터를 바탕으로 "자기이해형 리포트"를 JSON으로 작성해주세요.
-데이터가 부족하면 솔직하게 "아직 패턴을 파악하는 중이에요"라고 쓰세요.
-평가가 아닌 관찰 톤으로, 따뜻하고 친근하게 작성해주세요.
-
-반드시 아래 JSON 형식으로만 응답하세요 (다른 텍스트 없이):
-{
-  "headline": "이번 주를 한 문장으로 요약 (20자 이내)",
-  "goods": ["잘한 점 1", "잘한 점 2"],
-  "bads": ["아쉬운 점 1"],
-  "userType": {
-    "type": "작업 스타일 이름 (10자 이내)",
-    "emoji": "이모지 1개",
-    "reason": "왜 이 스타일인지 근거 포함 설명 (2문장 이내)"
-  },
-  "patterns": [
-    { "emoji": "이모지", "title": "패턴 제목", "body": "구체적 관찰 내용 (1~2문장)" }
-  ],
-  "projectFlows": {
-    "프로젝트명": "흐름 상태 한 줄 (예: 안정적으로 진행 중, 마감 압박 진입)"
-  },
-  "strategies": ["행동 전략 1", "행동 전략 2", "행동 전략 3"]
-}`;
+  const userPrompt = buildReportUserPrompt({ weeksText, projectsText, timeContext });
 
   try {
     const message = await anthropic.messages.create({
