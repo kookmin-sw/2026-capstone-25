@@ -228,8 +228,8 @@
 - [x] `backend/src/routes/projects.ts`에 `PATCH /api/projects/:id/steps` — 새 round로 저장
 - [x] `backend/src/schemas/project.ts`에 `EditStepsSchema` 추가
 - [x] 편집 중 단계 추가 시 임시 tempId 부여, 저장 시 백엔드에서 신규 발급
-- [ ] 이전 버전 복원 — `GET /api/projects/:id?round=N` 또는 별도 엔드포인트
-- [ ] 진행률은 최신 round의 done 비율 기준 (현재도 최신 round 기준으로 동작)
+- [x] 이전 버전 복원 — `GET /api/projects/:id/rounds` + `POST /api/projects/:id/rounds/:round/restore`
+- [x] 진행률은 최신 round의 done 비율 기준 (현재도 최신 round 기준으로 동작)
 
 **J7 추가 산출물**:
 - [x] `frontend/src/services/projects.ts`에 `editSteps()` 추가 — PATCH 호출 함수

@@ -202,6 +202,33 @@ export async function editSteps(projectId: string, steps: EditStepInput[]) {
   }
 }
 
+// 프로젝트 버전(round) 목록을 조회한다 — 최신 3개.
+export type RoundInfo = {
+  round: number;
+  decompositionId: string;
+  trigger: string;
+  createdAt: string;
+  stepCount: number;
+};
+
+export async function listRounds(projectId: string): Promise<RoundInfo[]> {
+  const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/rounds`, {
+    headers: await authHeaders(),
+  });
+  if (!response.ok) throw new Error("버전 목록을 불러오지 못했어요.");
+  const data = (await response.json()) as { rounds: RoundInfo[] };
+  return data.rounds;
+}
+
+// 특정 round를 최신으로 복원한다 — 해당 round의 단계가 새 round로 복사된다.
+export async function restoreRound(projectId: string, round: number): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/rounds/${round}/restore`, {
+    method: "POST",
+    headers: await authHeaders(),
+  });
+  if (!response.ok) throw new Error("버전 복원에 실패했어요.");
+}
+
 // 특정 부모 단계의 모든 하위 단계 삭제 — 상세 화면 자식 박스의 "전체 취소" 버튼이 호출.
 export async function deleteSubSteps(projectId: string, parentStepId: string) {
   const response = await fetch(

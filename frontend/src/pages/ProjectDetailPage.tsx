@@ -12,11 +12,14 @@ import {
   deleteSubSteps,
   editSteps,
   getProject,
+  listRounds,
+  restoreRound,
   saveSubSteps,
   toggleStep,
   type CreateStepInput,
   type EditStepInput,
   type ProjectDetail,
+  type RoundInfo,
   type StepDetail,
 } from "../services/projects";
 import { decomposeSub } from "../services/decompose";
@@ -56,7 +59,13 @@ export default function ProjectDetailPage() {
   const [editableSteps, setEditableSteps] = useState<EditableStep[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
-  // 2차 분해 호출 중인 부모 step id — 해당 카드의 "하위 단계로 쪼개기" 버튼만 비활성
+  // 버전 기록 상태
+  const [showHistory, setShowHistory] = useState(false);
+  const [rounds, setRounds] = useState<RoundInfo[]>([]);
+  const [isLoadingRounds, setIsLoadingRounds] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
+
+  // 2차 분해 호출 중인 부모 step id — 해당 카드의 "2단계 쪼개기" 버튼만 비활성
   const [busySubParentId, setBusySubParentId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -235,6 +244,51 @@ export default function ProjectDetailPage() {
     }
   }
 
+  // 버전 기록 토글 — 처음 열 때만 API 조회
+  async function handleToggleHistory() {
+    if (!id) return;
+    if (!showHistory && rounds.length === 0) {
+      setIsLoadingRounds(true);
+      try {
+        const data = await listRounds(id);
+        setRounds(data);
+      } catch {
+        alert("버전 목록을 불러오지 못했어요.");
+        return;
+      } finally {
+        setIsLoadingRounds(false);
+      }
+    }
+    setShowHistory((prev) => !prev);
+  }
+
+  // 특정 버전 복원 — 성공 시 프로젝트 재조회
+  async function handleRestore(round: number) {
+    if (!id) return;
+    const ok = window.confirm(`버전 ${round}로 복원할까요? 현재 단계 목록은 새 버전으로 대체됩니다.`);
+    if (!ok) return;
+    setIsRestoring(true);
+    try {
+      await restoreRound(id, round);
+      const updated = await getProject(id);
+      setProject(updated);
+      setShowHistory(false);
+      setRounds([]);
+    } catch {
+      alert("복원하지 못했어요. 다시 시도해 주세요.");
+    } finally {
+      setIsRestoring(false);
+    }
+  }
+
+  // trigger 한국어 변환
+  function triggerLabel(trigger: string): string {
+    if (trigger === "initial") return "최초 생성";
+    if (trigger === "edit") return "직접 편집";
+    if (trigger === "restore") return "버전 복원";
+    return trigger;
+  }
+
   async function handleDelete() {
     if (!project) return;
     const ok = window.confirm("이 프로젝트를 삭제할까요?");
@@ -360,18 +414,19 @@ export default function ProjectDetailPage() {
           </button>
         </div>
       ) : (
+        <>
         <div className="grid grid-cols-[1fr_auto_1fr] gap-2.5 items-center pt-2">
           <button
             type="button"
             onClick={handleEditStart}
-            className="rounded-xl border border-bd bg-sf px-4 py-3 text-sm font-black text-tx text-center hover:bg-fa transition-colors"
+            className="rounded-xl border border-bd bg-sf px-4 py-3 text-sm font-black text-tx text-center hover:bg-fa transition-colors cursor-pointer"
           >
             수정하기
           </button>
           <button
             type="button"
             onClick={() => void handleDelete()}
-            className="w-11 h-11 border border-bd rounded-xl bg-sf text-red-500 flex items-center justify-center hover:bg-red-50 hover:border-red-300 transition-colors"
+            className="w-11 h-11 border border-bd rounded-xl bg-sf text-red-500 flex items-center justify-center hover:bg-red-50 hover:border-red-300 transition-colors cursor-pointer"
             aria-label="프로젝트 삭제"
           >
             <Trash2 size={18} />
@@ -379,11 +434,55 @@ export default function ProjectDetailPage() {
           <button
             type="button"
             onClick={() => navigate("/all")}
-            className="rounded-xl border border-bd bg-sf px-4 py-3 text-sm font-black text-tx text-center hover:bg-fa transition-colors"
+            className="rounded-xl border border-bd bg-sf px-4 py-3 text-sm font-black text-tx text-center hover:bg-fa transition-colors cursor-pointer"
           >
             목록으로
           </button>
         </div>
+
+        {/* 버전 기록 토글 버튼 */}
+        <button
+          type="button"
+          onClick={() => void handleToggleHistory()}
+          disabled={isLoadingRounds || isRestoring}
+          className="w-full text-center text-xs font-bold text-mu py-1.5 hover:text-tx transition-colors cursor-pointer disabled:opacity-50"
+        >
+          {isLoadingRounds ? "불러오는 중…" : showHistory ? "▲ 버전 기록 닫기" : "🕐 버전 기록"}
+        </button>
+
+        {/* 버전 기록 패널 */}
+        {showHistory && (
+          <div className="bg-fa border border-bd2 rounded-2xl px-4 py-3 space-y-2">
+            {rounds.length <= 1 ? (
+              <p className="text-xs text-mu text-center py-2">이전 버전이 없어요.</p>
+            ) : (
+              rounds.map((r, i) => (
+                <div key={r.decompositionId} className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-tx">
+                      버전 {r.round}
+                      {i === 0 && <span className="ml-1.5 text-ac font-black">현재</span>}
+                    </p>
+                    <p className="text-[11px] text-mu">
+                      {triggerLabel(r.trigger)} · {r.stepCount}단계 · {new Date(r.createdAt).toLocaleDateString("ko-KR")}
+                    </p>
+                  </div>
+                  {i !== 0 && (
+                    <button
+                      type="button"
+                      onClick={() => void handleRestore(r.round)}
+                      disabled={isRestoring}
+                      className="shrink-0 text-xs font-black text-ac border border-ac rounded-lg px-2.5 py-1 hover:bg-ac-s transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      복원
+                    </button>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        )}
+        </>
       )}
     </div>
   );

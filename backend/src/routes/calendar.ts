@@ -77,7 +77,23 @@ router.get("/", async (req, res) => {
     };
   });
 
-  res.json({ assignments });
+  // D-Day 표시용: 해당 범위에 마감일이 있는 프로젝트 조회
+  const { data: dueData } = await supabase
+    .from("projects")
+    .select("id, title, goal, color, due")
+    .eq("user_id", req.userId)
+    .gte("due", from)
+    .lte("due", to)
+    .not("due", "is", null);
+
+  const dueProjects = (dueData ?? []).map((p: any) => ({
+    id: p.id,
+    title: p.title ?? p.goal ?? "",
+    color: p.color ?? null,
+    due: p.due,
+  }));
+
+  res.json({ assignments, dueProjects });
 });
 
 // ── POST /api/calendar ───────────────────────────────────────────────────────
