@@ -8,6 +8,29 @@ import { CreateProjectSchema, CreateStepSchema, CreateSubStepsSchema, EditStepsS
 // 프로젝트 생성, 목록 조회, 삭제를 담당한다.
 const router = Router();
 
+// 프로젝트 색상 팔레트 — 신규 프로젝트 확정 시 사용자의 기존 색상과 겹치지 않게 랜덤 선택한다.
+// §15.3 "각 프로젝트에 고유 색상" 원칙. 7개를 다 쓰면 재사용 허용.
+const PROJECT_COLOR_PALETTE = [
+  "#FF9478", // orange
+  "#FFB85C", // amber
+  "#FFD88A", // yellow
+  "#7BC496", // green
+  "#88BEEC", // sky
+  "#B399E4", // purple
+  "#FFB5C5", // pink
+] as const;
+
+async function pickColorForUser(userId: string | undefined): Promise<string> {
+  const { data } = await supabase
+    .from("projects")
+    .select("color")
+    .eq("user_id", userId);
+  const used = new Set((data ?? []).map((p) => p.color).filter((c): c is string => !!c));
+  const available = PROJECT_COLOR_PALETTE.filter((c) => !used.has(c));
+  const pool = available.length > 0 ? available : PROJECT_COLOR_PALETTE;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
 type ProjectRow = {
   id: string;
   title: string | null; // 마이그레이션 004 — 기존 row는 NULL일 수 있어 매핑 시 goal로 fallback
@@ -222,6 +245,9 @@ router.post("/", async (req, res) => {
 
   const input = parsed.data;
 
+  // 명시적 color가 없으면 사용자의 기존 색상과 겹치지 않는 팔레트에서 랜덤 선택.
+  const assignedColor = input.color ?? (await pickColorForUser(userId));
+
   const { data: project, error: projectError } = await supabase
     .from("projects")
     .insert({
@@ -232,7 +258,7 @@ router.post("/", async (req, res) => {
       secondary_tags: input.secondaryTags,
       goal: input.goal,
       current_phase: input.currentPhase,
-      color: input.color ?? "#ff6b3d",
+      color: assignedColor,
       start_date: input.startDate,
       due: input.due,
       is_single: input.isSingle,
