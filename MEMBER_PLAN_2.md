@@ -138,17 +138,16 @@
 |---|---|
 | **작업일** | _일 |
 | **선행 조건** | R6 완료 |
-| **검증** | "💬 AI에게 직접 얘기" 입력란에 "단계 3을 더 구체적으로" 입력 → 재분해 → 새 결과. "돌리기" 버튼으로 이전 버전 복원 가능. 최대 3개 버전 보관 |
+| **검증** | "💬 AI에게 직접 얘기" 입력란에 피드백 입력 → 직전 결과를 참조한 새 분해. 히스토리 펼침 목록과 "돌리기" 버튼 모두 현재 결과를 보존하며 임의 이전 버전 복원 가능(최대 3개). 자식 단계가 있는 상태에선 재분해 칩 위에 사전 안내 캡션 노출 |
 | **PR 브랜치** | `feat/refine-feedback` |
 
 **산출물**:
-- [ ] `RefineBlock.tsx`에 피드백 textarea + 전송 버튼 추가
-- [ ] `services/decompose.ts`에 `userFeedback` 인자 추가 → 백엔드 전달
-- [x] `backend/src/routes/decompose.ts`에서 `userFeedback`을 user 메시지에 동봉(prompt cache 접두부 영향 없도록 user 쪽에 배치)
-- [x] `useState<DecomposeResult[]>` 최대 3개 버전 보관 — `pushVersion`/`popVersion` 헬퍼
-- [x] "돌리기" 버튼 — 직전 버전으로 복원
-- [ ] RefineBlock 히스토리 드롭다운(최대 3개) — 직전 1개 pop 외에 임의 이전 버전으로 복원할 수 있도록 UI 확장(§3.3 "최대 3개 이전 버전 히스토리 복원 가능")
-- [ ] (선택) 시스템 프롬프트에 "사용자 피드백이 있을 때 반영 규칙" 명시
+- [x] RefineBlock UI 확장 — 피드백 textarea·전송 버튼, 히스토리 펼침 목록(임의 버전 복원), 자식 있을 때 사전 안내 캡션
+- [x] feedback 모드에 직전 1차 단계 압축본(`previousSteps`) 첨부 — 백·프 스키마 동기, 사용자 참조 표현 해석 근거. `smaller`/`larger`는 미첨부
+- [x] 백엔드 `decompose.ts` — `refineFeedback`/`previousSteps`를 user 메시지에 동봉(prompt cache 접두부 보존)
+- [x] 히스토리 정책 일치 — "돌리기"와 펼침 목록 모두 현재 결과를 슬롯에 보존, 상한 `MAX_HISTORY=3`
+- [x] "2단계 쪼개기" → "하위 단계로 쪼개기" 표현 통일 — 기수 오독 회피
+- [ ] (선택) 시스템 프롬프트에 "사용자 피드백 반영 규칙" 명시
 
 ### R9. 템플릿 카탈로그 8 카테고리 + structureHint — **재은**
 
