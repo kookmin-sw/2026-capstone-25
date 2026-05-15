@@ -97,10 +97,7 @@ export default function ReportPage() {
           <UserTypeCard ai={ai} loading={aiLoading} />
           <PatternCards patterns={ai?.patterns ?? null} loading={aiLoading} />
           <WeeklySummary weeks={report.weeks} />
-          <ProjectBreakdown
-            projects={report.projects}
-            projectFlows={ai?.projectFlows ?? null}
-          />
+          <ProjectBreakdown projects={report.projects} />
           <NextWeekSuggestion
             strategies={ai?.strategies ?? null}
             loading={aiLoading}
