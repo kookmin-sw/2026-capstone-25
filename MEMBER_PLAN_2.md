@@ -174,21 +174,25 @@
 |---|---|
 | **작업일** | _일 |
 | **선행 조건** | R9 완료(입력 폼 안정화 후) |
-| **검증** | pdf·docx·txt·md·png·jpg·webp·gif 최대 3개 업로드. 백엔드에서 텍스트 추출 → AI 입력에 결합. 추출 실패 시 사용자에게 알림 + 텍스트 입력으로 폴백 |
+| **검증** | (1) pdf·docx·txt·md·png·jpg·webp·gif 최대 3개·총 5MB 업로드 → 형식별 처리(docx/txt/md 텍스트 추출, pdf 네이티브 document block, 이미지 vision block)로 AI 입력에 결합돼 분해 결과 analysis/constraints 에 첨부 내용 반영. (2) F5 시 sessionStorage 캐시 hit → AI 재호출 없음. (3) RefineBlock 재분해 시 같은 path 재사용 → 백엔드 캐시 HIT 로그(`cache HIT`) + Storage 다운로드 0회. (4) 확정 저장 / 돌아가기 시 Storage 객체 삭제(`storage.objects` 0 rows). (5) 추출 실패 시 422 + 사용자 친화 메시지(현재 자동 폴백 없음 — 사용자가 해당 파일 제거 후 재시도). (6) 백엔드 캐시 LRU 상한 20 entry — 초과 시 evict 로그 |
 | **PR 브랜치** | `feat/attachments` |
 
 **산출물**:
-- [x] `frontend` 측 — 폼에 파일 input 추가, 3개 제한, 형식 화이트리스트 (§3.2)
-- [ ] `frontend/src/services/decompose.ts` — `multipart/form-data`로 파일 동봉
-- [ ] `backend/src/routes/decompose.ts` — multer(또는 동급) 미들웨어로 파일 수신
-- [ ] `backend/src/lib/extract.ts` — 형식별 추출
-  - pdf: `pdf-parse` 또는 동급
-  - docx: `mammoth`
-  - txt/md: 그대로 읽기
-  - 이미지: Anthropic 비전 입력으로 직접 첨부(텍스트 추출 단계 생략 가능) 또는 OCR
-- [ ] 파일 크기 상한(예: 10MB) + 총합 상한(예: 20MB) — 초과 시 422
-- [ ] INTAKE 단계에서 추출된 텍스트를 `rawText` 뒤에 결합 → DECOMPOSE 시스템 프롬프트는 변경 없음(접두부 캐시 보존)
-- [ ] 의존성 추가: `multer`, `pdf-parse`, `mammoth` (사용자 확인 후)
+- [x] `frontend/src/pages/HomePage.tsx` — 폼에 파일 input 추가(3개 제한, 한 파일 당 5MB, 최대 5MB), `File[]` 을 navigate state 로 ResultPage 에 전달
+- [x] `frontend/src/pages/ResultPage.tsx` — 마운트 시 attachments 없으면 Supabase Storage 에 업로드 → `input.attachments` 채움, 업로드 직후 history.state replace 로 F5 시 캐시 hit 보장, fingerprint 에 path 포함, 확정/돌아가기 시 `removeAttachments` 호출, LoadingView 에 업로드 단계 표시
+- [x] `frontend/src/schemas/decompose.ts` — `AttachmentRefSchema` + 제한 상수(`ATTACHMENT_MAX_COUNT=3` · `MAX_BYTES_PER_FILE=5MB` · `MAX_BYTES_TOTAL=5MB`) + `DecomposeRequestSchema.attachments` 옵션 + superRefine 총합 검증. 백엔드와 미러
+- [x] `frontend/src/lib/attachmentUpload.ts` (신규) — 브라우저 SHA-256 으로 path prefix 합성, `uploadAttachments` / `removeAttachments` / `validateAttachments` (클라이언트 사전 검증)
+- [x] `backend/src/schemas/decompose.ts` — 프론트와 동일한 `AttachmentRefSchema` + 제한 상수 + `DecomposeRequestSchema.attachments` 옵션. 단일 소스의 양쪽 미러
+- [x] `backend/src/lib/extract.ts` (신규) — 형식별 처리
+  - pdf: **Anthropic 네이티브 PDF document block** (pdf-parse 대신 base64 그대로 전달 — 텍스트+레이아웃+도표 손실 없음)
+  - docx: `mammoth` 로 raw text 추출 → text block
+  - txt/md: utf-8 디코드 → text block
+  - 이미지(png/jpg/webp/gif): base64 → Anthropic vision image block
+  - 실패 시 `ExtractError(filename, reason)` → 라우트가 422 사용자 친화 메시지로 변환
+- [x] `backend/src/routes/decompose.ts` — service-role Supabase Storage 로 path 다운로드 → 추출 → user content array(text/document/image) 빌드. system 프롬프트 불변(접두부 캐시 보존). `extractCache` LRU 캐시(상한 20 entry, path 키)로 같은 세션 재분해 시 Storage download + 추출 둘 다 스킵, RAM 누적 상한 강제. cache HIT/MISS/evict 디버그 로그
+- [x] 의존성 추가: `mammoth` 1개 (PDF/이미지는 Anthropic 네이티브, multer 는 multipart 미사용으로 불필요)
+- [x] `supabase/migrations/006_decompose_attachments.sql` (신규) — 버킷 `decompose-attachments` 생성 + `storage.objects` 에 본인 폴더 RLS 정책 3개 (INSERT/SELECT/DELETE)
+- [x] **재첨부 방지 흐름 통합** — 사용자가 새로고침·재분해·돌리기 어떤 경우에도 파일 재선택 불필요. (a) Storage 가 영구 저장소, (b) sessionStorage 캐시가 입력+응답 들고 있음, (c) 백엔드 LRU 캐시가 추출 결과 들고 있음 — 세 층이 함께 작동
 
 ### R11. 분해 품질 회귀 케이스 + 프롬프트 보강 — **재은**
 

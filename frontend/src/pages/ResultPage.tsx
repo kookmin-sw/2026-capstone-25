@@ -9,6 +9,13 @@ import type {
   RefineMode,
   Step,
 } from "../schemas/decompose";
+import { supabase } from "../lib/supabase";
+import {
+  AttachmentUploadError,
+  AttachmentValidationError,
+  removeAttachments,
+  uploadAttachments,
+} from "../lib/attachmentUpload";
 import ResultBlock from "../components/result/ResultBlock";
 import ReasoningBlock from "../components/result/ReasoningBlock";
 import RefineBlock, { type HistoryPreview } from "../components/result/RefineBlock";
@@ -16,7 +23,8 @@ import ConfirmBlock from "../components/result/ConfirmBlock";
 import StepEditor, { type EditableStep } from "../components/edit/StepEditor";
 
 // 결과 화면 진입 시 location.state 로 전달되는 입력. HomePage 의 navigate 와 모양을 맞춘다.
-type LocationState = { input?: DecomposeRequest };
+// files 는 첫 마운트 1회에 한해 사용 — 업로드 완료 후 input.attachments 로 옮기고 메모리에서 폐기.
+type LocationState = { input?: DecomposeRequest; files?: File[] };
 
 const MAX_HISTORY = 3;
 
@@ -42,7 +50,24 @@ function fingerprint(input: DecomposeRequest): string {
     s: input.startDate ?? "",
     d: input.dueDate ?? "",
     h: input.templateHint ?? "",
+    // 첨부가 바뀌면 같은 텍스트 입력이라도 새로 분해해야 하므로 fingerprint 에 path 들을 포함.
+    a: (input.attachments ?? [])
+      .map((x) => x.path)
+      .sort()
+      .join("|"),
   });
+}
+
+// 새 입력으로 들어왔을 때 이전 캐시에 남은 첨부 파일을 Supabase Storage 에서 청소한다.
+// fingerprint mismatch 시 호출 — 이전 경로들이 그대로 두면 cron 외엔 청소될 일이 없음.
+async function cleanupStaleCache(currentFingerprint: string): Promise<void> {
+  const cache = readCache();
+  if (!cache) return;
+  if (cache.fingerprint === currentFingerprint) return;
+  const stalePaths = (cache.input.attachments ?? []).map((a) => a.path);
+  if (stalePaths.length > 0) {
+    await removeAttachments(stalePaths);
+  }
 }
 
 function readCache(): CacheShape | null {
@@ -83,7 +108,9 @@ function getHydratedCache(initialInput: DecomposeRequest | undefined): CacheShap
 export default function ResultPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const initialInput = (location.state as LocationState | null)?.input;
+  const initialState = location.state as LocationState | null;
+  const initialInput = initialState?.input;
+  const initialFiles = initialState?.files;
 
   // 마운트 시점 1회만 캐시를 읽어 초기 state를 채운다.
   // useState의 lazy initializer를 쓰면 4번 호출돼도 sessionStorage 접근은 첫 호출만 의미가 있지만,
@@ -94,6 +121,7 @@ export default function ResultPage() {
   const [data, setData] = useState<DecomposeApiResponse | null>(hydratedCache?.data ?? null);
   const [history, setHistory] = useState<DecomposeApiResponse[]>(hydratedCache?.history ?? []);
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -116,7 +144,44 @@ export default function ResultPage() {
   useEffect(() => {
     if (!input || firedRef.current || data) return;
     firedRef.current = true;
-    void runDecompose(input, { pushHistory: false });
+
+    // 새 입력(캐시 mismatch)이고 파일이 동봉됐다면: 청소 → 업로드 → 분해.
+    // 파일이 없으면 곧장 분해.
+    const filesToUpload = initialFiles && initialFiles.length > 0 ? initialFiles : null;
+    void (async () => {
+      try {
+        await cleanupStaleCache(fingerprint(input));
+
+        if (filesToUpload && !input.attachments) {
+          setUploading(true);
+          const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+          if (sessionError || !sessionData.session) {
+            throw new Error("로그인이 필요해요.");
+          }
+          const userId = sessionData.session.user.id;
+          // sessionId: 같은 분해 세션의 파일을 한 폴더로 묶는 단위.
+          const sessionId = crypto.randomUUID();
+          const refs = await uploadAttachments({ userId, sessionId, files: filesToUpload });
+          setUploading(false);
+
+          const next: DecomposeRequest = { ...input, attachments: refs };
+          // F5 가 fingerprint 일치로 캐시 hit 하도록 history state 도 attachments 포함된 input 으로 교체.
+          // files 는 이미 Storage 에 있으므로 다시 들고 다닐 필요 없음(폐기).
+          navigate(".", { replace: true, state: { input: next } });
+          await runDecompose(next, { pushHistory: false });
+          return;
+        }
+
+        await runDecompose(input, { pushHistory: false });
+      } catch (e) {
+        setUploading(false);
+        if (e instanceof AttachmentValidationError || e instanceof AttachmentUploadError) {
+          setError(e.message);
+        } else {
+          setError(e instanceof Error ? e.message : "분해를 시작하지 못했어요.");
+        }
+      }
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [input?.title]);
 
@@ -255,6 +320,10 @@ export default function ResultPage() {
 
   async function onConfirmAction(id: ConfirmActionId) {
     if (id === "back") {
+      // 돌아가기 — 업로드해 두었던 첨부 파일을 정리. 캐시도 비움.
+      const paths = (input?.attachments ?? []).map((a) => a.path);
+      if (paths.length > 0) void removeAttachments(paths);
+      clearCache();
       navigate("/");
       return;
     }
@@ -265,6 +334,9 @@ export default function ResultPage() {
       try {
         const payload = buildCreateProjectInput(input, data, id === "save-single");
         await createProject(payload);
+        // 저장 성공 — Storage 임시 파일을 청소하고 캐시 폐기.
+        const paths = (input.attachments ?? []).map((a) => a.path);
+        if (paths.length > 0) void removeAttachments(paths);
         clearCache();
         // replace: true — 뒤로가기로 /result에 돌아와 AI를 또 호출하거나 같은 제목으로 중복 저장하는 사고 방지
         navigate("/all", { replace: true });
@@ -324,6 +396,8 @@ export default function ResultPage() {
     try {
       const payload = buildCreateProjectInput(input, data, false, editableSteps);
       await createProject(payload);
+      const paths = (input.attachments ?? []).map((a) => a.path);
+      if (paths.length > 0) void removeAttachments(paths);
       clearCache();
       // replace: true — 뒤로가기로 /result에 돌아와 AI를 또 호출하거나 같은 제목으로 중복 저장하는 사고 방지
       navigate("/all", { replace: true });
@@ -336,8 +410,8 @@ export default function ResultPage() {
 
   if (!input) return null; // navigate("/") 가 진행 중인 짧은 순간
 
-  if (!data && busy) {
-    return <LoadingView />;
+  if (!data && (busy || uploading)) {
+    return <LoadingView uploading={uploading} />;
   }
 
   if (!data && error) {
@@ -533,14 +607,16 @@ function BusyBar({ text = "다시 분해하는 중…" }: { text?: string }) {
   );
 }
 
-function LoadingView() {
+function LoadingView({ uploading = false }: { uploading?: boolean }) {
   return (
     <div className="px-4 lg:px-8 py-10 max-w-[520px] mx-auto w-full flex flex-col items-center text-center">
       <div className="relative w-16 h-16 mb-6">
         <span className="absolute inset-0 rounded-full border-4 border-ac-s2" />
         <span className="absolute inset-0 rounded-full border-4 border-transparent border-t-ac animate-spin" />
       </div>
-      <div className="text-lg font-bold text-tx mb-2">할 일을 단계로 쪼개고 있어요</div>
+      <div className="text-lg font-bold text-tx mb-2">
+        {uploading ? "첨부 파일을 올리는 중이에요" : "할 일을 단계로 쪼개고 있어요"}
+      </div>
       <div className="text-sm text-mu mb-6">잠시만 기다려 주세요…</div>
     </div>
   );

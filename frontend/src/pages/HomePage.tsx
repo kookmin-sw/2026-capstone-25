@@ -15,7 +15,6 @@ const ACCEPTED_FILE_EXT = [
   ".jpg",
   ".jpeg",
   ".webp",
-  ".gif",
 ];
 const MAX_FILES = 3;
 const TITLE_MAX = 30;
@@ -90,16 +89,14 @@ export default function HomePage() {
     }
 
     // AI 쪼개기 ON — 결과 페이지로 입력 전달. 분해 호출과 화면 렌더는 ResultPage 책임.
-    const fileNames = files.map((f) => f.name).join(", ");
-    const memoParts = [values.description?.trim(), fileNames ? `첨부 파일: ${fileNames}` : ""]
-      .filter((s): s is string => !!s);
+    // 첨부 파일은 ResultPage 가 Supabase Storage 에 업로드하고 path 를 input.attachments 로 채워 넣는다.
     const input: DecomposeRequest = {
       title: values.title,
-      memo: memoParts.length > 0 ? memoParts.join("\n\n") : undefined,
+      memo: values.description?.trim() || undefined,
       startDate: values.startDate || undefined,
       dueDate: values.dueDate || undefined,
     };
-    navigate("/result", { state: { input } });
+    navigate("/result", { state: { input, files } });
   }
 
   return (
@@ -218,7 +215,7 @@ export default function HomePage() {
                       />
                     </label>
                     <span className="text-[11px] text-mu font-medium">
-                      PDF · DOCX · TXT · MD · 이미지(PNG/JPG/WEBP) · 최대 {MAX_FILES}개
+                      PDF · DOCX · TXT · MD · 이미지(PNG/JPG/WEBP) · 최대 {MAX_FILES}개(최대 5MB)
                     </span>
                   </div>
                 )}
