@@ -67,11 +67,11 @@ export default function SingleCard({ project, onToggle, selectionMode, isSelecte
             onClick={() => stepId && onToggle(stepId, !done)}
             aria-label={done ? "완료 해제" : "완료 체크"}
             className={[
-              "w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 cursor-pointer transition-all",
+              "w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 cursor-pointer transition-all",
               done ? "bg-tx2 border-tx2" : "bg-sf border-bd hover:border-tx2",
             ].join(" ")}
           >
-            {done && <Check size={14} strokeWidth={2.5} color="white" />}
+            {done && <Check size={11} strokeWidth={2.5} color="white" />}
           </button>
         </>
       )}
