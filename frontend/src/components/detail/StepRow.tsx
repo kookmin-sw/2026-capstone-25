@@ -106,14 +106,14 @@ export default function StepRow({
           onClick={() => { if (!hasChildren) onToggle(step.id, !step.done); }}
           disabled={hasChildren}
           className={[
-            "shrink-0 w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-150 mt-0.5",
+            "shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-150 mt-0.5",
             hasChildren ? "cursor-default opacity-70" : "cursor-pointer",
             step.done ? "bg-gn border-gn" : "bg-transparent border-bd2 hover:border-gn",
           ].join(" ")}
           aria-label={step.done ? "완료 해제" : "완료 체크"}
           title={hasChildren ? "하위 단계가 모두 완료되면 자동 완료돼요" : undefined}
         >
-          {step.done && <Check size={14} strokeWidth={2.5} color="white" />}
+          {step.done && <Check size={11} strokeWidth={2.5} color="white" />}
         </button>
       </div>
 

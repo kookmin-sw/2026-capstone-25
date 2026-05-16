@@ -176,7 +176,6 @@ export default function CalendarPage() {
 
       {/* ── 헤더: 타이틀 + 오늘 버튼 + 토글 ── */}
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[22px] font-bold text-tx tracking-[-0.3px]">일정</span>
         <div className="flex items-center gap-2">
           {/* 오늘 날짜 숫자 버튼 */}
           <button
@@ -318,12 +317,12 @@ export default function CalendarPage() {
 
           {/* 선택 모드 하단 삭제 바 */}
           {selectionMode && (
-            <div className="fixed bottom-[calc(80px+env(safe-area-inset-bottom))] left-0 right-0 px-4 z-20">
+            <div className="fixed bottom-0 left-0 right-0 lg:left-[248px] z-20 border-t border-bd2 bg-sf px-[18px] pt-3 pb-[max(20px,calc(env(safe-area-inset-bottom)+12px))]">
               <button
                 type="button"
                 onClick={() => void deleteSelected()}
                 disabled={selectedIds.size === 0}
-                className="w-full rounded-xl border border-bd bg-sf py-3 text-sm font-black text-mu shadow-sm disabled:opacity-40 transition-opacity hover:bg-fa"
+                className="w-full rounded-xl bg-fa border border-bd py-3 text-sm font-black text-mu disabled:opacity-40 transition-opacity hover:bg-bd2"
               >
                 {selectedIds.size > 0 ? `${selectedIds.size}개 배정 취소` : "항목을 선택하세요"}
               </button>
@@ -346,7 +345,7 @@ export default function CalendarPage() {
         <button
           type="button"
           onClick={() => setShowPicker(true)}
-          className="fixed bottom-[64px] right-[18px] lg:right-[max(18px,calc((100vw-1148px)/2+18px))] w-14 h-14 rounded-full bg-ac text-white text-2xl font-black shadow-[0_4px_16px_rgba(0,0,0,0.18)] flex items-center justify-center z-40 hover:opacity-90 transition-opacity cursor-pointer"
+          className="fixed bottom-[calc(80px+env(safe-area-inset-bottom)+8px)] right-[18px] lg:right-[max(18px,calc((100vw-1148px)/2+18px))] w-14 h-14 rounded-full bg-ac text-white text-2xl font-black shadow-[0_4px_16px_rgba(0,0,0,0.18)] flex items-center justify-center z-40 hover:opacity-90 transition-opacity cursor-pointer"
           aria-label="할 일 추가"
         >
           ＋
