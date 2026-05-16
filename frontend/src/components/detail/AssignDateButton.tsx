@@ -21,6 +21,10 @@ function formatDate(dateStr: string): string {
 export default function AssignDateButton({ stepId, assignedDate, onAssigned }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
+  // 배정 성공 후 로컬에서 날짜를 보여주기 위한 상태 (prop이 갱신 안 돼도 UI에 반영)
+  const [localDate, setLocalDate] = useState<string | null>(assignedDate ?? null);
+
+  const displayDate = localDate ?? assignedDate;
 
   // 날짜 선택 완료 시 API 호출
   async function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -30,9 +34,10 @@ export default function AssignDateButton({ stepId, assignedDate, onAssigned }: P
     setLoading(true);
     try {
       const { id } = await createAssignment(stepId, date);
+      setLocalDate(date);
       onAssigned?.(id, date);
     } catch {
-      // 실패 시 조용히 무시 (UI는 변경 없음)
+      alert("날짜 배정에 실패했어요. 다시 시도해주세요.");
     } finally {
       setLoading(false);
     }
@@ -46,14 +51,14 @@ export default function AssignDateButton({ stepId, assignedDate, onAssigned }: P
         disabled={loading}
         className={[
           "flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-black transition-colors cursor-pointer",
-          assignedDate
+          displayDate
             ? "bg-ac-s border-ac text-ac-d"
             : "bg-fa border-bd text-tx2 hover:bg-ac-s hover:text-ac-d hover:border-ac",
         ].join(" ")}
         aria-label="날짜 배정"
       >
         <CalendarDays size={12} />
-        {assignedDate ? formatDate(assignedDate) : "날짜 배정"}
+        {displayDate ? formatDate(displayDate) : "날짜 배정"}
       </button>
 
       {/* 숨겨진 date input — showPicker()로 브라우저 기본 날짜 선택기를 연다 */}
@@ -62,7 +67,7 @@ export default function AssignDateButton({ stepId, assignedDate, onAssigned }: P
         type="date"
         className="absolute inset-0 opacity-0 w-0 h-0 pointer-events-none"
         onChange={handleChange}
-        value={assignedDate ?? ""}
+        value={displayDate ?? ""}
         tabIndex={-1}
         aria-hidden
       />

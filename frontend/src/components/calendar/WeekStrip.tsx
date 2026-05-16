@@ -15,9 +15,10 @@ function getWeekStart(date: Date): Date {
 type Props = {
   selectedDate: string; // YYYY-MM-DD
   onSelect: (date: string) => void;
+  assignedDates?: Set<string>; // 배정된 날짜 집합 (점 표시용)
 };
 
-export default function WeekStrip({ selectedDate, onSelect }: Props) {
+export default function WeekStrip({ selectedDate, onSelect, assignedDates }: Props) {
   const todayStr = toDateStr(new Date());
 
   const weekDays = (() => {
@@ -35,6 +36,7 @@ export default function WeekStrip({ selectedDate, onSelect }: Props) {
         const str = toDateStr(d);
         const isToday = str === todayStr;
         const isSelected = str === selectedDate;
+        const hasAssignment = assignedDates?.has(str) ?? false;
 
         return (
           <button
@@ -67,6 +69,8 @@ export default function WeekStrip({ selectedDate, onSelect }: Props) {
             >
               {d.getDate()}
             </span>
+            {/* 배정 점 표시 */}
+            <span className={["w-1 h-1 rounded-full transition-all", hasAssignment ? "bg-ac" : "bg-transparent"].join(" ")} />
           </button>
         );
       })}
