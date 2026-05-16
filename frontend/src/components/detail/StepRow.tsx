@@ -7,7 +7,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, Check, Split, Pencil } from "lucide-react";
 import type { StepDetail } from "../../services/projects";
-import AssignDateButton from "./AssignDateButton";
 import SubStepBox from "./SubStepBox";
 
 type Props = {
@@ -122,7 +121,6 @@ export default function StepRow({
 
           {/* 액션 버튼 — §10.3.3 ②: 하위 없으면 하위 단계로 쪼개기 + 시작 + 체크, 있으면 세부 단계 수정 + 체크 */}
           <div className="flex items-center justify-end gap-2 pt-1">
-            <AssignDateButton stepId={step.id} />
             {hasChildren ? (
               <button
                 type="button"
