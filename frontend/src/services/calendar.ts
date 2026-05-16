@@ -1,6 +1,7 @@
 // 캘린더 탭 API 호출 함수 모음.
 // 백엔드 /api/calendar 라우트와 1:1 대응한다.
 import { supabase } from "../lib/supabase";
+import { apiFetch, checkResponse } from "../lib/api";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
 
@@ -47,11 +48,11 @@ export type CalendarData = {
 
 // 날짜 범위의 배정 목록 + 마감일 프로젝트 조회
 export async function listAssignments(from: string, to: string): Promise<CalendarData> {
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_BASE_URL}/api/calendar?from=${from}&to=${to}`,
     { headers: await authHeaders() },
   );
-  if (!response.ok) throw new Error("일정을 불러오지 못했어요.");
+  await checkResponse(response, "일정을 불러오지 못했어요.");
   return (await response.json()) as CalendarData;
 }
 
@@ -61,12 +62,12 @@ export async function createAssignment(
   date: string,
   priority = 0,
 ): Promise<{ id: string }> {
-  const response = await fetch(`${API_BASE_URL}/api/calendar`, {
+  const response = await apiFetch(`${API_BASE_URL}/api/calendar`, {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify({ stepId, date, priority }),
   });
-  if (!response.ok) throw new Error("일정 배정에 실패했어요.");
+  await checkResponse(response, "일정 배정에 실패했어요.");
   return (await response.json()) as { id: string };
 }
 
@@ -75,19 +76,19 @@ export async function patchAssignment(
   id: string,
   payload: { date?: string; priority?: number },
 ): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/calendar/${id}`, {
+  const response = await apiFetch(`${API_BASE_URL}/api/calendar/${id}`, {
     method: "PATCH",
     headers: await authHeaders(),
     body: JSON.stringify(payload),
   });
-  if (!response.ok) throw new Error("일정 변경에 실패했어요.");
+  await checkResponse(response, "일정 변경에 실패했어요.");
 }
 
 // 배정 삭제
 export async function deleteAssignment(id: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/calendar/${id}`, {
+  const response = await apiFetch(`${API_BASE_URL}/api/calendar/${id}`, {
     method: "DELETE",
     headers: await authHeaders(),
   });
-  if (!response.ok) throw new Error("일정 삭제에 실패했어요.");
+  await checkResponse(response, "일정 삭제에 실패했어요.");
 }

@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabase";
+import { apiFetch, checkResponse } from "../lib/api";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
 
@@ -44,10 +45,10 @@ export type AiSummary = {
 };
 
 export async function getWeeklyReport(): Promise<WeeklyReport> {
-  const response = await fetch(`${API_BASE_URL}/api/report/weekly`, {
+  const response = await apiFetch(`${API_BASE_URL}/api/report/weekly`, {
     headers: await authHeaders(),
   });
-  if (!response.ok) throw new Error("리포트를 불러오지 못했어요.");
+  await checkResponse(response, "리포트를 불러오지 못했어요.");
   return (await response.json()) as WeeklyReport;
 }
 
@@ -55,11 +56,11 @@ export async function getAiSummary(
   weeks: WeekData[],
   projects: ProjectReport[],
 ): Promise<AiSummary> {
-  const response = await fetch(`${API_BASE_URL}/api/report/ai-summary`, {
+  const response = await apiFetch(`${API_BASE_URL}/api/report/ai-summary`, {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify({ weeks, projects }),
   });
-  if (!response.ok) throw new Error("AI 분석에 실패했어요.");
+  await checkResponse(response, "AI 분석에 실패했어요.");
   return (await response.json()) as AiSummary;
 }

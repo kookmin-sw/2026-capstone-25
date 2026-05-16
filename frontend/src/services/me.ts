@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabase";
+import { apiFetch, checkResponse } from "../lib/api";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
 
@@ -16,17 +17,17 @@ export type MeStats = {
 };
 
 export async function getMeStats(): Promise<MeStats> {
-  const response = await fetch(`${API_BASE_URL}/api/me/stats`, {
+  const response = await apiFetch(`${API_BASE_URL}/api/me/stats`, {
     headers: await authHeaders(),
   });
-  if (!response.ok) throw new Error("통계를 불러오지 못했어요.");
+  await checkResponse(response, "통계를 불러오지 못했어요.");
   return (await response.json()) as MeStats;
 }
 
 export async function getUserInfo(): Promise<{ id: string; email: string }> {
-  const response = await fetch(`${API_BASE_URL}/api/me`, {
+  const response = await apiFetch(`${API_BASE_URL}/api/me`, {
     headers: await authHeaders(),
   });
-  if (!response.ok) throw new Error("사용자 정보를 불러오지 못했어요.");
+  await checkResponse(response, "사용자 정보를 불러오지 못했어요.");
   return (await response.json()) as { id: string; email: string };
 }

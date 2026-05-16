@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabase";
+import { apiFetch, checkResponse } from "../lib/api";
 import {
   DecomposeApiResponseSchema,
   type DecomposeApiResponse,
@@ -16,16 +17,13 @@ async function authHeaders(): Promise<Record<string, string>> {
 }
 
 export async function decompose(input: DecomposeRequest): Promise<DecomposeApiResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/decompose`, {
+  const response = await apiFetch(`${API_BASE_URL}/api/decompose`, {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify(input),
   });
 
-  if (!response.ok) {
-    const detail = await response.text().catch(() => "");
-    throw new Error(`AI 분해 요청이 실패했어요. (${response.status}) ${detail}`);
-  }
+  await checkResponse(response, "AI 분해 요청이 실패했어요.");
 
   const json = (await response.json()) as unknown;
   // 응답 모양이 스키마와 다르면 화면 렌더 전에 명확하게 끊어준다.
@@ -53,16 +51,13 @@ export async function decomposeSub(input: SubDecomposeInput): Promise<DecomposeA
     memo: input.memo,
   };
 
-  const response = await fetch(`${API_BASE_URL}/api/decompose/sub`, {
+  const response = await apiFetch(`${API_BASE_URL}/api/decompose/sub`, {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify(body),
   });
 
-  if (!response.ok) {
-    const detail = await response.text().catch(() => "");
-    throw new Error(`하위 단계로 쪼개기에 실패했어요. (${response.status}) ${detail}`);
-  }
+  await checkResponse(response, "하위 단계로 쪼개기에 실패했어요.");
 
   const json = (await response.json()) as unknown;
   return DecomposeApiResponseSchema.parse(json);

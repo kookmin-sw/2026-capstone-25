@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabase";
+import { apiFetch, checkResponse } from "../lib/api";
 
 // /all 화면에서 쓰는 프로젝트 API 호출 함수 모음.
 // 매 요청마다 Supabase access_token을 Authorization 헤더에 붙인다.
@@ -37,13 +38,11 @@ async function authHeaders() {
 }
 
 export async function listProjects() {
-  const response = await fetch(`${API_BASE_URL}/api/projects`, {
+  const response = await apiFetch(`${API_BASE_URL}/api/projects`, {
     headers: await authHeaders(),
   });
 
-  if (!response.ok) {
-    throw new Error("프로젝트 목록을 불러오지 못했어요.");
-  }
+  await checkResponse(response, "프로젝트 목록을 불러오지 못했어요.");
 
   const data = (await response.json()) as { projects: ProjectSummary[] };
   return data.projects;
@@ -80,26 +79,22 @@ export type ProjectDetail = {
 
 // 프로젝트 단건 상세 조회 — 단계 가이드 포함 전체 정보를 반환한다.
 export async function getProject(id: string): Promise<ProjectDetail> {
-  const response = await fetch(`${API_BASE_URL}/api/projects/${id}`, {
+  const response = await apiFetch(`${API_BASE_URL}/api/projects/${id}`, {
     headers: await authHeaders(),
   });
 
-  if (!response.ok) {
-    throw new Error("프로젝트를 불러오지 못했어요.");
-  }
+  await checkResponse(response, "프로젝트를 불러오지 못했어요.");
 
   return (await response.json()) as ProjectDetail;
 }
 
 export async function deleteProject(id: string) {
-  const response = await fetch(`${API_BASE_URL}/api/projects/${id}`, {
+  const response = await apiFetch(`${API_BASE_URL}/api/projects/${id}`, {
     method: "DELETE",
     headers: await authHeaders(),
   });
 
-  if (!response.ok) {
-    throw new Error("프로젝트를 삭제하지 못했어요.");
-  }
+  await checkResponse(response, "프로젝트를 삭제하지 못했어요.");
 }
 
 // POST /api/projects 요청 본문 — 백엔드 CreateProjectSchema와 모양이 같아야 한다.
@@ -134,26 +129,13 @@ export type CreateProjectInput = {
 };
 
 export async function createProject(input: CreateProjectInput): Promise<{ id: string }> {
-  const response = await fetch(`${API_BASE_URL}/api/projects`, {
+  const response = await apiFetch(`${API_BASE_URL}/api/projects`, {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify(input),
   });
 
-  if (!response.ok) {
-    // 백엔드는 실패 시 { error: string | flattenedZodError } 반환
-    let detail = "";
-    try {
-      const data = (await response.json()) as { error?: unknown };
-      if (typeof data.error === "string") detail = data.error;
-    } catch {
-      // 응답 본문이 비어 있거나 JSON이 아닐 수 있음 — 무시하고 일반 메시지로
-    }
-    if (response.status === 401) {
-      throw new Error("로그인이 만료되었어요. 다시 로그인해 주세요.");
-    }
-    throw new Error(detail || "프로젝트를 저장하지 못했어요.");
-  }
+  await checkResponse(response, "프로젝트를 저장하지 못했어요.");
 
   return (await response.json()) as { id: string };
 }
@@ -165,22 +147,13 @@ export async function saveSubSteps(
   parentStepId: string,
   steps: CreateStepInput[],
 ) {
-  const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/sub-steps`, {
+  const response = await apiFetch(`${API_BASE_URL}/api/projects/${projectId}/sub-steps`, {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify({ parentStepId, steps }),
   });
 
-  if (!response.ok) {
-    let detail = "";
-    try {
-      const data = (await response.json()) as { error?: unknown };
-      if (typeof data.error === "string") detail = data.error;
-    } catch {
-      // ignore
-    }
-    throw new Error(detail || "하위 단계를 저장하지 못했어요.");
-  }
+  await checkResponse(response, "하위 단계를 저장하지 못했어요.");
 }
 
 // 단계 인라인 편집 — 트리 구조(1차 + 자식 children)를 그대로 보낸다.
@@ -196,15 +169,13 @@ export async function editSteps(
   steps: EditStepInput[],
   meta?: { title?: string; startDate?: string | null; due?: string | null },
 ) {
-  const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/steps`, {
+  const response = await apiFetch(`${API_BASE_URL}/api/projects/${projectId}/steps`, {
     method: "PATCH",
     headers: await authHeaders(),
     body: JSON.stringify({ steps, ...meta }),
   });
 
-  if (!response.ok) {
-    throw new Error("단계 수정을 저장하지 못했어요.");
-  }
+  await checkResponse(response, "단계 수정을 저장하지 못했어요.");
 }
 
 // 프로젝트 버전(round) 목록을 조회한다 — 최신 3개.
@@ -217,26 +188,26 @@ export type RoundInfo = {
 };
 
 export async function listRounds(projectId: string): Promise<RoundInfo[]> {
-  const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/rounds`, {
+  const response = await apiFetch(`${API_BASE_URL}/api/projects/${projectId}/rounds`, {
     headers: await authHeaders(),
   });
-  if (!response.ok) throw new Error("버전 목록을 불러오지 못했어요.");
+  await checkResponse(response, "버전 목록을 불러오지 못했어요.");
   const data = (await response.json()) as { rounds: RoundInfo[] };
   return data.rounds;
 }
 
 // 특정 round를 최신으로 복원한다 — 해당 round의 단계가 새 round로 복사된다.
 export async function restoreRound(projectId: string, round: number): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/rounds/${round}/restore`, {
+  const response = await apiFetch(`${API_BASE_URL}/api/projects/${projectId}/rounds/${round}/restore`, {
     method: "POST",
     headers: await authHeaders(),
   });
-  if (!response.ok) throw new Error("버전 복원에 실패했어요.");
+  await checkResponse(response, "버전 복원에 실패했어요.");
 }
 
 // 특정 부모 단계의 모든 하위 단계 삭제 — 상세 화면 자식 박스의 "전체 취소" 버튼이 호출.
 export async function deleteSubSteps(projectId: string, parentStepId: string) {
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_BASE_URL}/api/projects/${projectId}/sub-steps/${parentStepId}`,
     {
       method: "DELETE",
@@ -244,27 +215,16 @@ export async function deleteSubSteps(projectId: string, parentStepId: string) {
     },
   );
 
-  if (!response.ok) {
-    let detail = "";
-    try {
-      const data = (await response.json()) as { error?: unknown };
-      if (typeof data.error === "string") detail = data.error;
-    } catch {
-      // ignore
-    }
-    throw new Error(detail || "하위 단계 취소에 실패했어요.");
-  }
+  await checkResponse(response, "하위 단계 취소에 실패했어요.");
 }
 
 // 단계 완료 여부를 토글한다. done: true → 완료, false → 미완료.
 export async function toggleStep(id: string, done: boolean) {
-  const response = await fetch(`${API_BASE_URL}/api/steps/${id}`, {
+  const response = await apiFetch(`${API_BASE_URL}/api/steps/${id}`, {
     method: "PATCH",
     headers: await authHeaders(),
     body: JSON.stringify({ done }),
   });
 
-  if (!response.ok) {
-    throw new Error("단계 상태를 변경하지 못했어요.");
-  }
+  await checkResponse(response, "단계 상태를 변경하지 못했어요.");
 }
