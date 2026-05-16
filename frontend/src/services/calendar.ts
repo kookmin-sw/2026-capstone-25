@@ -30,6 +30,7 @@ export type CalendarAssignment = {
     id: string;
     title: string;
     color: string | null;
+    due: string | null;
   };
 };
 

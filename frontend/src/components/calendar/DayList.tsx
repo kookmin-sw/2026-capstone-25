@@ -1,6 +1,5 @@
 // 선택 날짜의 배정된 단계 카드 리스트.
-// 일반 모드: 색상 점 + 텍스트 + 시작 + 체크 + ▲▼.
-// 선택 모드: 왼쪽 체크박스로 다중 선택 → 부모가 삭제 처리.
+// 프로토타입 .todo-row 스타일 기준: padding 12px 14px, gap 10px, radius 12px
 import { useNavigate } from "react-router-dom";
 import { Check, ChevronUp, ChevronDown } from "lucide-react";
 import EmptyState from "../EmptyState";
@@ -16,6 +15,16 @@ type Props = {
   onToggleDone: (stepId: string, done: boolean) => void;
   onPriorityChange: (id: string, priority: number) => void;
 };
+
+function dDayLabel(due: string): string | null {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dueDate = new Date(due + "T00:00:00");
+  const diff = Math.round((dueDate.getTime() - today.getTime()) / 86400000);
+  if (diff < 0) return `D+${Math.abs(diff)}`;
+  if (diff === 0) return "D-Day";
+  return `D-${diff}`;
+}
 
 export default function DayList({ assignments, selectionMode, selectedIds, onToggleSelect, onToggleDone, onPriorityChange }: Props) {
   const navigate = useNavigate();
@@ -49,12 +58,14 @@ export default function DayList({ assignments, selectionMode, selectedIds, onTog
           {sorted.map((a, i) => {
             const color = a.project.color ?? "var(--color-ac)";
             const isSelected = selectedIds.has(a.id);
+            const dd = a.project.due ? dDayLabel(a.project.due) : null;
 
             return (
               <li
                 key={a.id}
                 className={[
-                  "bg-sf border rounded-2xl px-4 py-2.5 flex items-center gap-3 transition-colors",
+                  "bg-sf border rounded-xl flex items-center gap-[10px] transition-colors",
+                  "px-[14px] py-3",
                   selectionMode ? "cursor-pointer" : "",
                   isSelected ? "border-ac bg-ac-s" : "border-bd2",
                 ].join(" ")}
@@ -87,13 +98,19 @@ export default function DayList({ assignments, selectionMode, selectedIds, onTog
                 <div className="flex-1 min-w-0">
                   <p
                     className={[
-                      "text-sm font-bold leading-5 truncate",
+                      "text-[13.5px] font-bold truncate leading-5",
                       a.step.done ? "line-through text-mu" : "text-tx",
                     ].join(" ")}
                   >
                     {a.step.title}
                   </p>
-                  <p className="text-[11px] text-mu truncate">{a.project.title}</p>
+                  {/* 프로젝트명 + D-Day */}
+                  <p className="text-[11.5px] text-mu mt-0.5 truncate">
+                    {a.project.title}
+                    {dd && (
+                      <span className="font-black text-tx"> · {dd}</span>
+                    )}
+                  </p>
                 </div>
 
                 {/* 일반 모드: 시작 + 체크 + ▲▼ */}
@@ -108,7 +125,6 @@ export default function DayList({ assignments, selectionMode, selectedIds, onTog
                         시작
                       </button>
                     )}
-                    {/* 체크 버튼 — StepRow와 동일한 스타일 */}
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); void handleToggleDone(a.step.id, a.step.done); }}
@@ -122,7 +138,6 @@ export default function DayList({ assignments, selectionMode, selectedIds, onTog
                     >
                       {a.step.done && <Check size={14} strokeWidth={2.5} color="white" />}
                     </button>
-                    {/* ▲▼ 순서 변경 */}
                     <div className="flex flex-col shrink-0">
                       <button
                         type="button"
