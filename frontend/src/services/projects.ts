@@ -25,7 +25,9 @@ export type ProjectSummary = {
     id: string;
     title: string;
     estimatedMinutes: number | null;
+    parentStepId: string | null;
   }[];
+  firstStepId: string | null;
 };
 
 async function authHeaders() {
@@ -133,7 +135,7 @@ export type CreateProjectInput = {
   steps?: CreateStepInput[];
 };
 
-export async function createProject(input: CreateProjectInput): Promise<{ id: string }> {
+export async function createProject(input: CreateProjectInput): Promise<{ id: string; firstStepId: string | null }> {
   const response = await apiFetch(`${API_BASE_URL}/api/projects`, {
     method: "POST",
     headers: await authHeaders(),
@@ -142,7 +144,7 @@ export async function createProject(input: CreateProjectInput): Promise<{ id: st
 
   await checkResponse(response, "프로젝트를 저장하지 못했어요.");
 
-  return (await response.json()) as { id: string };
+  return (await response.json()) as { id: string; firstStepId: string | null };
 }
 
 // 2차 분해 결과를 부모 단계 밑에 저장한다.

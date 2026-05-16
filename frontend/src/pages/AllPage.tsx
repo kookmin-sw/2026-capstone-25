@@ -5,8 +5,6 @@ import { deleteProject, listProjects, toggleStep, type ProjectSummary } from "..
 import EmptyState from "../components/EmptyState";
 import LoadingState from "../components/LoadingState";
 
-// 전체 탭 목록 모드.
-// DB 프로젝트를 마감일별로 묶고, 빈 상태/로딩/에러 상태를 함께 관리한다.
 type ProjectGroup = {
   key: string;
   label: string;
@@ -16,7 +14,6 @@ type ProjectGroup = {
 };
 
 function getDday(due: string | null) {
-  // 마감일 없으면 은은한 뱃지로 표시
   if (!due) return { label: "마감 없음", dday: "마감 없음", urgencyClass: "bg-fa text-mu" };
 
   const today = new Date();
@@ -25,7 +22,6 @@ function getDday(due: string | null) {
   const diff = Math.ceil((dueDate.getTime() - todayDate.getTime()) / 86_400_000);
 
   const dday = diff === 0 ? "D-Day" : diff > 0 ? `D-${diff}` : `D+${Math.abs(diff)}`;
-  // 초과·당일: 부드러운 레드 / 7일 이내: 앱 오렌지 계열 / 그 외: 크림 뱃지
   const urgencyClass =
     diff <= 0 ? "bg-red-300 text-red-900"
     : diff <= 7 ? "bg-orange-200 text-orange-900"
@@ -39,7 +35,6 @@ function groupProjects(projects: ProjectSummary[]) {
     const ad = a.due ?? "9999-12-31";
     const bd = b.due ?? "9999-12-31";
     if (ad !== bd) return ad < bd ? -1 : 1;
-    // 같은 마감일 내에서 단일 작업은 뒤로
     if (a.isSingle !== b.isSingle) return a.isSingle ? 1 : -1;
     return b.createdAt.localeCompare(a.createdAt);
   });
@@ -67,11 +62,11 @@ export default function AllPage() {
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [error, setError] = useState("");
+  const [tab, setTab] = useState<"ongoing" | "completed">("ongoing");
 
   async function loadProjects() {
     setStatus("loading");
     setError("");
-
     try {
       setProjects(await listProjects());
       setStatus("ready");
@@ -85,28 +80,36 @@ export default function AllPage() {
     void loadProjects();
   }, []);
 
-  const groups = useMemo(() => groupProjects(projects), [projects]);
-  const ongoing = projects.filter((project) => project.progress < 100).length;
-  const completed = projects.length - ongoing;
+  const ongoingProjects = useMemo(() => projects.filter((p) => p.progress < 100), [projects]);
+  const completedProjects = useMemo(() => projects.filter((p) => p.progress >= 100), [projects]);
+  const groups = useMemo(() => groupProjects(tab === "ongoing" ? ongoingProjects : completedProjects), [tab, ongoingProjects, completedProjects]);
+  const ongoing = ongoingProjects.length;
+  const completed = completedProjects.length;
 
   async function handleToggle(stepId: string, done: boolean) {
-    await toggleStep(stepId, done);
-    // 완료 상태 변경 → 진행률 갱신을 위해 목록 다시 조회
-    void loadProjects();
+    setProjects((prev) =>
+      prev.map((p) => {
+        if (p.firstStepId !== stepId) return p;
+        const doneCount = done ? 1 : 0;
+        return { ...p, doneCount, progress: done ? 100 : 0, nextStep: done ? null : { id: stepId, title: p.title, estimatedMinutes: null } };
+      }),
+    );
+    try {
+      await toggleStep(stepId, done);
+    } catch {
+      void loadProjects();
+    }
   }
 
   async function handleDelete(id: string) {
     const ok = window.confirm("이 프로젝트를 삭제할까요?");
     if (!ok) return;
-
     await deleteProject(id);
     setProjects((current) => current.filter((project) => project.id !== id));
   }
 
   if (status === "loading") {
-    return (
-      <LoadingState title="프로젝트를 불러오고 있어요" className="max-w-[720px]" />
-    );
+    return <LoadingState title="프로젝트를 불러오고 있어요" className="max-w-[720px]" />;
   }
 
   if (status === "error") {
@@ -114,11 +117,7 @@ export default function AllPage() {
       <div className="px-4 lg:px-8 py-16 max-w-[720px] mx-auto w-full text-center">
         <div className="text-lg font-black text-tx">목록을 불러오지 못했어요</div>
         <p className="mt-2 text-sm text-mu">{error}</p>
-        <button
-          type="button"
-          onClick={() => void loadProjects()}
-          className="mt-5 rounded-full bg-tx text-white px-4 py-2 text-sm font-black"
-        >
+        <button type="button" onClick={() => void loadProjects()} className="mt-5 rounded-full bg-tx text-white px-4 py-2 text-sm font-black">
           다시 시도
         </button>
       </div>
@@ -134,19 +133,32 @@ export default function AllPage() {
   }
 
   return (
-    <div className="px-[18px] py-6">
+    <div className="px-[18px] py-6 pb-24">
       <div className="mb-6">
-        <h1 className="text-[22px] font-bold text-tx tracking-[-0.3px] mb-2">나의 할 일</h1>
-        <div className="flex gap-4 text-xs text-mu">
-          <span>
-            진행중 <span className="font-black text-tx2">{ongoing}</span>
-          </span>
-          <span>
-            완료 <span className="font-black text-tx2">{completed}</span>
-          </span>
+        <h1 className="text-[22px] font-bold text-tx tracking-[-0.3px] mb-3">나의 할 일</h1>
+        <div className="inline-flex bg-fa rounded-[10px] p-[3px] gap-[3px]">
+          {(["ongoing", "completed"] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTab(t)}
+              className={[
+                "px-3 py-1.5 rounded-lg text-[12px] font-bold cursor-pointer transition-all",
+                tab === t ? "bg-sf text-tx shadow-[0_1px_3px_rgba(0,0,0,0.08)]" : "text-mu",
+              ].join(" ")}
+            >
+              {t === "ongoing" ? "진행중" : "완료"} <span className={tab === t ? "text-ac-d" : "text-mu2"}>{t === "ongoing" ? ongoing : completed}</span>
+            </button>
+          ))}
         </div>
       </div>
 
+      {groups.length === 0 && (
+        <EmptyState
+          emoji={tab === "ongoing" ? "📋" : "🎉"}
+          title={tab === "ongoing" ? "진행 중인 할 일이 없어요" : "아직 완료한 할 일이 없어요"}
+        />
+      )}
       <div className="space-y-7">
         {groups.map((group) => (
           <section key={group.key}>
@@ -158,7 +170,7 @@ export default function AllPage() {
                 <span className="text-xs font-bold text-mu">{group.label}</span>
               )}
             </div>
-            <div className="grid gap-3 xl:grid-cols-2 2xl:grid-cols-3 items-start">
+            <div className="grid gap-[14px] xl:grid-cols-2 2xl:grid-cols-3 items-start">
               {group.projects.map((project) =>
                 project.isSingle ? (
                   <SingleCard key={project.id} project={project} onDelete={handleDelete} onToggle={handleToggle} />
@@ -170,6 +182,7 @@ export default function AllPage() {
           </section>
         ))}
       </div>
+
     </div>
   );
 }

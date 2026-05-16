@@ -56,49 +56,66 @@ export default function StepRow({
 
   return (
     <div className="bg-sf border border-bd2 rounded-2xl px-4 py-3.5 shadow-sm">
-      {/* ── 헤더 행 — 번호 뱃지 + 제목 + 예상시간 + 펼침 버튼 ── */}
-      <button
-        type="button"
-        onClick={() => setExpanded((prev) => !prev)}
-        className="w-full flex items-start gap-3 text-left cursor-pointer"
-      >
-        <div
-          className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-[11px] font-black mt-0.5"
-          style={{ backgroundColor: badgeBg, color: badgeColor }}
+      {/* ── 헤더 행 — 번호 뱃지 + 제목 + 예상시간 + 체크 + 펼침 버튼 ── */}
+      <div className="flex items-start gap-3">
+        <button
+          type="button"
+          onClick={() => setExpanded((prev) => !prev)}
+          className="flex-1 flex items-start gap-3 text-left cursor-pointer min-w-0"
         >
-          {index + 1}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p
+          <div
+            className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-[11px] font-black mt-0.5"
+            style={{ backgroundColor: badgeBg, color: badgeColor }}
+          >
+            {index + 1}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p
+              className={[
+                "text-sm font-bold leading-5 break-keep",
+                step.done ? "line-through text-mu" : "text-tx",
+              ].join(" ")}
+            >
+              {step.title}
+            </p>
+            {step.description && (
+              <p className={["text-[11px] text-mu mt-0.5 leading-relaxed", expanded ? "" : "line-clamp-1"].join(" ")}>
+                {step.description}
+              </p>
+            )}
+          </div>
+          {/* 예상 시간 뱃지 */}
+          {estimate && (
+            <span className="shrink-0 text-[11px] text-tx2 font-semibold bg-fa border border-bd2 rounded-full px-2.5 py-0.5 mt-0.5">
+              {estimate}
+            </span>
+          )}
+          <span
+            aria-hidden
             className={[
-              "text-sm font-bold leading-5 break-keep",
-              step.done ? "line-through text-mu" : "text-tx",
+              "shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-lg border border-bd bg-sf text-tx2 transition-transform mt-0.5",
+              expanded ? "rotate-180" : "",
             ].join(" ")}
           >
-            {step.title}
-          </p>
-          {step.description && (
-            <p className={["text-[11px] text-mu mt-0.5 leading-relaxed", expanded ? "" : "line-clamp-1"].join(" ")}>
-              {step.description}
-            </p>
-          )}
-        </div>
-        {/* 예상 시간 뱃지 */}
-        {estimate && (
-          <span className="shrink-0 text-[11px] text-tx2 font-semibold bg-fa border border-bd2 rounded-full px-2.5 py-0.5 mt-0.5">
-            {estimate}
+            <ChevronDown size={12} />
           </span>
-        )}
-        <span
-          aria-hidden
+        </button>
+        {/* 완료 체크 버튼 — 항상 헤더에 노출 */}
+        <button
+          type="button"
+          onClick={() => { if (!hasChildren) onToggle(step.id, !step.done); }}
+          disabled={hasChildren}
           className={[
-            "shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-lg border border-bd bg-sf text-tx2 transition-transform mt-0.5",
-            expanded ? "rotate-180" : "",
+            "shrink-0 w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-150 mt-0.5",
+            hasChildren ? "cursor-default opacity-70" : "cursor-pointer",
+            step.done ? "bg-gn border-gn" : "bg-transparent border-bd2 hover:border-gn",
           ].join(" ")}
+          aria-label={step.done ? "완료 해제" : "완료 체크"}
+          title={hasChildren ? "하위 단계가 모두 완료되면 자동 완료돼요" : undefined}
         >
-          <ChevronDown size={12} />
-        </span>
-      </button>
+          {step.done && <Check size={14} strokeWidth={2.5} color="white" />}
+        </button>
+      </div>
 
       {/* ── 펼쳐진 영역 — 가이드 3박스 + (하위 단계 박스) + 액션 버튼 ── */}
       {expanded && (
@@ -119,7 +136,8 @@ export default function StepRow({
             />
           )}
 
-          {/* 액션 버튼 — §10.3.3 ②: 하위 없으면 하위 단계로 쪼개기 + 시작 + 체크, 있으면 세부 단계 수정 + 체크 */}
+          {/* 액션 버튼 — §10.3.3 ②: 하위 없으면 쪼개기+시작(미완료만), 있으면 수정. 완료+하위없음은 숨김 */}
+          {(hasChildren || !step.done) && (
           <div className="flex items-center justify-end gap-2 pt-1">
             {hasChildren ? (
               <button
@@ -154,26 +172,8 @@ export default function StepRow({
                 )}
               </>
             )}
-            {/* 완료 체크 버튼 — 크기를 키워 눈에 잘 띄게.
-                하위가 있는 단계는 자식 완료 비율로 자동 결정되므로 직접 토글 비활성. */}
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); if (!hasChildren) onToggle(step.id, !step.done); }}
-              disabled={hasChildren}
-              className={[
-                "w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-150",
-                hasChildren ? "cursor-default" : "cursor-pointer",
-                step.done
-                  ? "bg-gn border-gn"
-                  : "bg-transparent border-bd2 hover:border-gn",
-                hasChildren ? "opacity-70" : "",
-              ].join(" ")}
-              aria-label={step.done ? "완료 해제" : "완료 체크"}
-              title={hasChildren ? "하위 단계가 모두 완료되면 자동 완료돼요" : undefined}
-            >
-              {step.done && <Check size={14} strokeWidth={2.5} color="white" />}
-            </button>
           </div>
+          )}
         </div>
       )}
     </div>

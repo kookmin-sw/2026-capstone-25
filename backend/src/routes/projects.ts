@@ -107,7 +107,7 @@ router.get("/", async (req, res) => {
   const { data: steps, error: stepsError } = decompositionIds.length
     ? await supabase
         .from("steps")
-        .select("id, decomposition_id, order_idx, title, done, estimated_minutes")
+        .select("id, decomposition_id, order_idx, title, done, estimated_minutes, parent_step_id")
         .in("decomposition_id", decompositionIds)
         .order("order_idx", { ascending: true })
     : { data: [], error: null };
@@ -117,8 +117,8 @@ router.get("/", async (req, res) => {
     return;
   }
 
-  const stepsByDecomposition = new Map<string, StepRow[]>();
-  for (const step of (steps ?? []) as StepRow[]) {
+  const stepsByDecomposition = new Map<string, StepDetailRow[]>();
+  for (const step of (steps ?? []) as StepDetailRow[]) {
     const group = stepsByDecomposition.get(step.decomposition_id) ?? [];
     group.push(step);
     stepsByDecomposition.set(step.decomposition_id, group);
@@ -132,9 +132,10 @@ router.get("/", async (req, res) => {
       const totalCount = projectSteps.length;
       const progress = totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100);
       const nextStep = projectSteps.find((step) => !step.done) ?? null;
+      const firstStepId = projectSteps[0]?.id ?? null;
       const schedulableSteps = projectSteps
         .filter((step) => !step.done)
-        .map((step) => ({ id: step.id, title: step.title, estimatedMinutes: step.estimated_minutes }));
+        .map((step) => ({ id: step.id, title: step.title, estimatedMinutes: step.estimated_minutes, parentStepId: step.parent_step_id ?? null }));
 
       return {
         id: project.id,
@@ -155,6 +156,7 @@ router.get("/", async (req, res) => {
             }
           : null,
         schedulableSteps,
+        firstStepId,
       };
     }),
   });
@@ -359,7 +361,7 @@ router.post("/", async (req, res) => {
     }
   }
 
-  res.status(201).json({ id: project.id });
+  res.status(201).json({ id: project.id, firstStepId: insertedParents[0]?.id ?? null });
 });
 
 // 단계 인라인 편집 — 새 round decomposition을 생성하고 편집된 단계들을 저장한다.

@@ -238,15 +238,12 @@ router.post("/ai-summary", async (req, res) => {
 });
 
 // 규칙 기반 사용자 타입 분석
-function analyzeUserType({ weeks, sessions, doneSteps, projects }: {
+function analyzeUserType({ weeks, doneSteps }: {
   weeks: { mins: number; done: number }[];
-  sessions: any[];
+  sessions?: any[];
   doneSteps: any[];
-  projects: any[];
+  projects?: any[];
 }): { type: string; emoji: string; description: string } {
-  const thisWeek = weeks[3];
-  const lastWeek = weeks[2];
-
   // 마감 부스터형: due 임박 프로젝트의 최근 완료 비율이 높은 경우
   const urgentDone = doneSteps.filter((s: any) => {
     const due = s.decompositions?.projects?.due;

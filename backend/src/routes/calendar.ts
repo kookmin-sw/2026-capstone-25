@@ -39,7 +39,8 @@ router.get("/", async (req, res) => {
           projects (
             id,
             title,
-            color
+            color,
+            due
           )
         )
       )
@@ -73,6 +74,7 @@ router.get("/", async (req, res) => {
         id: project.id,
         title: project.title ?? project.goal ?? "",
         color: project.color ?? null,
+        due: project.due ?? null,
       },
     };
   });

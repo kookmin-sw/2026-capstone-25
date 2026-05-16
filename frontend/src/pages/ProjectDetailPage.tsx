@@ -118,9 +118,9 @@ export default function ProjectDetailPage() {
       if (parentSyncId) {
         await toggleStep(parentSyncId, parentSyncDone);
       }
-    } catch {
-      // 실패 시 롤백
+    } catch (e) {
       setProject({ ...project, steps: prevSteps });
+      showToast(e instanceof Error ? e.message : "완료 상태 변경에 실패했어요.");
     }
   }
 
