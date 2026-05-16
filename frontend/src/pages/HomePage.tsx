@@ -5,6 +5,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import type { DecomposeRequest } from "../schemas/decompose";
 import { createProject } from "../services/projects";
+import {
+  CATEGORY_META,
+  CATEGORY_ORDER,
+  TEMPLATES,
+  getFeaturedTemplates,
+  getTemplatesByCategory,
+  joinCustomFieldsAsMemo,
+  type Template,
+  type TemplateCategory,
+} from "../services/templates";
+import TemplateCard from "../components/template/TemplateCard";
+import TemplatePreviewSheet from "../components/template/TemplatePreviewSheet";
 
 const ACCEPTED_FILE_EXT = [
   ".pdf",
@@ -40,6 +52,12 @@ export default function HomePage() {
   const [tab, setTab] = useState<TabKey>("direct");
   const [files, setFiles] = useState<File[]>([]);
 
+  // 선택한 템플릿 — null 이면 일반 직접 입력. 적용 시 폼이 prefill 되고 상단에 뱃지가 뜬다.
+  // structureHint 는 onSubmit 에서 input.templateHint 로 흘려보낸다.
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  // 미리보기 바텀시트가 보여주는 템플릿. 카드 탭 시 set, 닫기/시작 시 null.
+  const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
+
   const {
     register,
     handleSubmit,
@@ -74,6 +92,21 @@ export default function HomePage() {
     setFiles((prev) => prev.filter((_, i) => i !== idx));
   }
 
+  // 미리보기 바텀시트에서 "이 템플릿으로 시작" — 메모만 채우고 제목·일정은 사용자가 직접 입력.
+  // customFields placeholder 가 메모에 들어가 "어떤 정보를 적으면 좋은지" 안내 역할을 한다.
+  function onStartTemplate(t: Template) {
+    setSelectedTemplate(t);
+    setPreviewTemplate(null);
+    setValue("description", joinCustomFieldsAsMemo(t.customFields), { shouldDirty: true });
+    setValue("wantSplit", true, { shouldDirty: true });
+    setTab("direct");
+  }
+
+  // 적용된 템플릿 제거 — 입력 값은 그대로 두되 뱃지와 structureHint 전달만 끊는다.
+  function clearTemplateBadge() {
+    setSelectedTemplate(null);
+  }
+
   async function onSubmit(values: FormValues) {
     // AI 쪼개기 OFF — 단일 할 일로 저장 후 전체 목록으로 이동
     if (!values.wantSplit) {
@@ -96,11 +129,14 @@ export default function HomePage() {
 
     // AI 쪼개기 ON — 결과 페이지로 입력 전달. 분해 호출과 화면 렌더는 ResultPage 책임.
     // 첨부 파일은 ResultPage 가 Supabase Storage 에 업로드하고 path 를 input.attachments 로 채워 넣는다.
+    // 선택된 템플릿의 structureHint 는 templateHint 필드로 흘려보낸다 — 백엔드는
+    // 동적 user 메시지의 "# 템플릿 힌트" 섹션으로 부착하므로 시스템 프롬프트 접두부 캐시는 그대로 유지된다.
     const input: DecomposeRequest = {
       title: values.title,
       memo: values.description?.trim() || undefined,
       startDate: values.startDate || undefined,
       dueDate: values.dueDate || undefined,
+      templateHint: selectedTemplate?.structureHint?.trim() || undefined,
     };
     navigate("/result", { state: { input, files } });
   }
@@ -122,11 +158,29 @@ export default function HomePage() {
       </div>
 
       {tab === "template" ? (
-        <div className="bg-sf border border-bd2 rounded-xl p-10 text-center text-mu text-sm">
-          템플릿 카탈로그는 곧 준비됩니다.
-        </div>
+        <TemplateCatalog onPreview={setPreviewTemplate} />
       ) : (
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
+          {/* 적용된 템플릿 뱃지 — selectedTemplate 가 있을 때 입력 카드 위에 노출 */}
+          {selectedTemplate && (
+            <div className="mb-[10px] flex items-center justify-between bg-ac-s text-ac-d rounded-xl px-3 py-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-base leading-none" aria-hidden>{selectedTemplate.icon}</span>
+                <span className="text-xs font-black truncate">
+                  📋 {selectedTemplate.name} 템플릿 적용 중
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={clearTemplateBadge}
+                aria-label="템플릿 적용 해제"
+                className="shrink-0 text-[11px] font-bold text-ac-d hover:underline cursor-pointer"
+              >
+                해제
+              </button>
+            </div>
+          )}
+
           <div className="bg-sf border border-bd2 rounded-xl px-[18px] overflow-hidden">
             {/* Title */}
             <div className="py-4">
@@ -292,6 +346,78 @@ export default function HomePage() {
           </button>
         </form>
       )}
+
+      {/* 미리보기 바텀시트 — previewTemplate 가 있을 때만 마운트 */}
+      <TemplatePreviewSheet
+        template={previewTemplate}
+        onClose={() => setPreviewTemplate(null)}
+        onStart={onStartTemplate}
+      />
+    </div>
+  );
+}
+
+// §8.2 — 가로 스크롤 칩으로 카테고리를 토글한다 (프로토타입 .tpl-filter-row 패턴).
+// 한 번에 하나만 활성. 첫 칩 "추천"은 featured=true 인 템플릿, "전체"는 16개 전부.
+// 카드 클릭 시 onPreview 로 부모(HomePage)에 알리고, 미리보기 바텀시트는 부모가 띄운다.
+type CatalogFilter = "featured" | "all" | TemplateCategory;
+
+function TemplateCatalog({ onPreview }: { onPreview: (t: Template) => void }) {
+  const [filter, setFilter] = useState<CatalogFilter>("featured");
+
+  const chips: Array<{ id: CatalogFilter; label: string }> = [
+    { id: "featured", label: "✦ 추천" },
+    { id: "all", label: "전체" },
+    ...CATEGORY_ORDER.map((cat) => ({
+      id: cat as CatalogFilter,
+      label: `${CATEGORY_META[cat].icon} ${CATEGORY_META[cat].label}`,
+    })),
+  ];
+
+  let list: Template[];
+  if (filter === "featured") {
+    list = getFeaturedTemplates();
+  } else if (filter === "all") {
+    list = TEMPLATES;
+  } else {
+    list = getTemplatesByCategory(filter);
+  }
+
+  return (
+    <div>
+      {/* 카테고리 칩 행 — 가로 스크롤, 한 번에 하나만 활성 */}
+      <div className="flex gap-1.5 overflow-x-auto pb-1.5 mb-2.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        {chips.map((c) => {
+          const active = filter === c.id;
+          return (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => setFilter(c.id)}
+              className={[
+                "shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer whitespace-nowrap",
+                active
+                  ? "bg-ac text-white border border-ac"
+                  : "bg-sf text-tx2 border border-bd hover:border-ac",
+              ].join(" ")}
+            >
+              {c.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        {list.map((t) => (
+          <TemplateCard key={t.id} template={t} onSelect={onPreview} />
+        ))}
+      </div>
+
+      <p className="mt-3 text-[11px] text-mu text-center leading-relaxed">
+        템플릿을 골라 할 일을 쉽게 작성해보세요.
+        <br />
+        모든 항목은 자유롭게 수정할 수 있어요.
+      </p>
     </div>
   );
 }
