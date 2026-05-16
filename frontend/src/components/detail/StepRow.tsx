@@ -130,7 +130,7 @@ export default function StepRow({
                 className="inline-flex items-center gap-1 bg-fa text-tx2 border border-bd rounded-xl px-3 py-1.5 text-xs font-black hover:bg-ac-s hover:text-ac-d hover:border-ac transition-colors cursor-pointer"
               >
                 <Pencil size={12} strokeWidth={2.5} />
-                세부 단계 수정
+                수정
               </button>
             ) : (
               <>

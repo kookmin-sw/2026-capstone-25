@@ -14,16 +14,68 @@ export const PreviousStepSchema = z.object({
 });
 export type PreviousStep = z.infer<typeof PreviousStepSchema>;
 
-export const DecomposeRequestSchema = z.object({
-  title: z.string().min(1).max(500),
-  memo: z.string().max(5000).optional(),
-  startDate: z.string().date().optional(),
-  dueDate: z.string().date().optional(),
-  templateHint: z.string().max(2000).optional(),
-  refineMode: RefineModeSchema.optional(),
-  refineFeedback: z.string().max(2000).optional(),
-  previousSteps: z.array(PreviousStepSchema).max(30).optional(),
+// 첨부파일 제한 — backend/src/schemas/decompose.ts 와 동일 값. 한쪽 변경 시 양쪽 갱신.
+export const ATTACHMENT_MAX_COUNT = 3;
+export const ATTACHMENT_MAX_BYTES_PER_FILE = 5 * 1024 * 1024;
+export const ATTACHMENT_MAX_BYTES_TOTAL = 5 * 1024 * 1024;
+
+export const ATTACHMENT_ALLOWED_MIME = [
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "text/plain",
+  "text/markdown",
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+] as const;
+export type AttachmentMime = (typeof ATTACHMENT_ALLOWED_MIME)[number];
+
+// 확장자 → MIME 매핑. 브라우저가 File.type 을 빈 문자열로 주는 경우(특히 .md/.txt) 의 폴백.
+export const ATTACHMENT_EXT_TO_MIME: Record<string, AttachmentMime> = {
+  ".pdf": "application/pdf",
+  ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ".txt": "text/plain",
+  ".md": "text/markdown",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".webp": "image/webp",
+  ".gif": "image/gif",
+};
+
+export const AttachmentRefSchema = z.object({
+  path: z.string().min(1).max(500),
+  filename: z.string().min(1).max(255),
+  contentType: z.enum(ATTACHMENT_ALLOWED_MIME),
+  size: z.number().int().nonnegative().max(ATTACHMENT_MAX_BYTES_PER_FILE),
 });
+export type AttachmentRef = z.infer<typeof AttachmentRefSchema>;
+
+export const DecomposeRequestSchema = z
+  .object({
+    title: z.string().min(1).max(500),
+    memo: z.string().max(5000).optional(),
+    startDate: z.string().date().optional(),
+    dueDate: z.string().date().optional(),
+    templateHint: z.string().max(2000).optional(),
+    refineMode: RefineModeSchema.optional(),
+    refineFeedback: z.string().max(2000).optional(),
+    previousSteps: z.array(PreviousStepSchema).max(30).optional(),
+    attachments: z.array(AttachmentRefSchema).max(ATTACHMENT_MAX_COUNT).optional(),
+  })
+  .superRefine((value, ctx) => {
+    const atts = value.attachments;
+    if (!atts || atts.length === 0) return;
+    const totalBytes = atts.reduce((sum, a) => sum + a.size, 0);
+    if (totalBytes > ATTACHMENT_MAX_BYTES_TOTAL) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["attachments"],
+        message: `첨부 파일 총 용량이 ${Math.round(ATTACHMENT_MAX_BYTES_TOTAL / (1024 * 1024))}MB 를 초과합니다.`,
+      });
+    }
+  });
 
 export type DecomposeRequest = z.infer<typeof DecomposeRequestSchema>;
 

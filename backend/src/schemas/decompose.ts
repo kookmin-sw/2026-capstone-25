@@ -17,16 +17,63 @@ export const PreviousStepSchema = z.object({
 });
 export type PreviousStep = z.infer<typeof PreviousStepSchema>;
 
-export const DecomposeRequestSchema = z.object({
-  title: z.string().min(1).max(500),
-  memo: z.string().max(5000).optional(),
-  startDate: z.string().date().optional(),
-  dueDate: z.string().date().optional(),
-  templateHint: z.string().max(2000).optional(),
-  refineMode: RefineModeSchema.optional(),
-  refineFeedback: z.string().max(2000).optional(),
-  previousSteps: z.array(PreviousStepSchema).max(30).optional(),
+// 첨부파일 제한 — 프론트/백 단일 소스. UI 가드와 백엔드 superrefine 가드가 동일 값을 본다.
+export const ATTACHMENT_MAX_COUNT = 3;
+export const ATTACHMENT_MAX_BYTES_PER_FILE = 5 * 1024 * 1024;
+export const ATTACHMENT_MAX_BYTES_TOTAL = 5 * 1024 * 1024;
+
+// 첨부 형식 화이트리스트 — Anthropic 입력 분기와 일치.
+// document: pdf (Anthropic 네이티브 PDF document block)
+// text:     txt · md (utf-8 디코드 후 text block)
+// docx:     mammoth 로 텍스트 추출 후 text block
+// image:    png · jpg · webp · gif (Anthropic vision)
+export const ATTACHMENT_ALLOWED_MIME = [
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "text/plain",
+  "text/markdown",
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+] as const;
+export type AttachmentMime = (typeof ATTACHMENT_ALLOWED_MIME)[number];
+
+// Supabase Storage 에 업로드된 첨부 파일을 참조한다.
+// 백엔드는 path 로 다운로드해 내용을 추출 후 user 메시지에 결합한다.
+// 파일 본체는 브라우저 ↔ Supabase Storage 사이에서만 오가고, 백엔드 ↔ 프론트는 path 만 주고받는다.
+export const AttachmentRefSchema = z.object({
+  path: z.string().min(1).max(500),
+  filename: z.string().min(1).max(255),
+  contentType: z.enum(ATTACHMENT_ALLOWED_MIME),
+  size: z.number().int().nonnegative().max(ATTACHMENT_MAX_BYTES_PER_FILE),
 });
+export type AttachmentRef = z.infer<typeof AttachmentRefSchema>;
+
+export const DecomposeRequestSchema = z
+  .object({
+    title: z.string().min(1).max(500),
+    memo: z.string().max(5000).optional(),
+    startDate: z.string().date().optional(),
+    dueDate: z.string().date().optional(),
+    templateHint: z.string().max(2000).optional(),
+    refineMode: RefineModeSchema.optional(),
+    refineFeedback: z.string().max(2000).optional(),
+    previousSteps: z.array(PreviousStepSchema).max(30).optional(),
+    attachments: z.array(AttachmentRefSchema).max(ATTACHMENT_MAX_COUNT).optional(),
+  })
+  .superRefine((value, ctx) => {
+    const atts = value.attachments;
+    if (!atts || atts.length === 0) return;
+    const totalBytes = atts.reduce((sum, a) => sum + a.size, 0);
+    if (totalBytes > ATTACHMENT_MAX_BYTES_TOTAL) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["attachments"],
+        message: `첨부 파일 총 용량이 ${Math.round(ATTACHMENT_MAX_BYTES_TOTAL / (1024 * 1024))}MB 를 초과합니다.`,
+      });
+    }
+  });
 
 export type DecomposeRequest = z.infer<typeof DecomposeRequestSchema>;
 
