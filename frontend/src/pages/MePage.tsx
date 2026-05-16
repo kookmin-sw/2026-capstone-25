@@ -2,26 +2,17 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";
 import { supabase } from "../lib/supabase";
-import { getMeStats, getUserInfo, type MeStats } from "../services/me";
-import { listProjects, type ProjectSummary } from "../services/projects";
-import StatsCard from "../components/me/StatsCard";
-import CompletedProjectList from "../components/me/CompletedProjectList";
+import { getUserInfo } from "../services/me";
 import LoadingState from "../components/LoadingState";
 
 export default function MePage() {
   const navigate = useNavigate();
-  const [stats, setStats] = useState<MeStats | null>(null);
-  const [completed, setCompleted] = useState<ProjectSummary[]>([]);
   const [email, setEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([getMeStats(), listProjects(), getUserInfo()])
-      .then(([s, projects, info]) => {
-        setStats(s);
-        setCompleted(projects.filter((p) => p.progress >= 100));
-        setEmail(info.email);
-      })
+    getUserInfo()
+      .then((info) => setEmail(info.email))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -32,32 +23,15 @@ export default function MePage() {
   }
 
   return (
-    <div className="px-[18px] py-6 space-y-6">
-      {/* 헤더 */}
-      <div>
-        <h1 className="text-[22px] font-bold text-tx tracking-[-0.3px]">나</h1>
-        {email && (
-          <p className="text-sm text-mu mt-0.5">{email}</p>
-        )}
-      </div>
-
+    <div className="px-[18px] py-6 space-y-4">
       {loading ? (
         <LoadingState title="내 정보를 불러오고 있어요" className="max-w-[520px]" />
       ) : (
         <>
-          {/* 통계 카드 */}
-          {stats && (
-            <StatsCard
-              totalMins={stats.totalMins}
-              doneCount={stats.doneCount}
-              streak={stats.streak}
-            />
-          )}
-
-          {/* 완료된 프로젝트 */}
-          <div>
-            <p className="text-xs font-bold text-mu mb-3 px-1">완료한 프로젝트</p>
-            <CompletedProjectList projects={completed} />
+          {/* 내 계정 카드 */}
+          <div className="bg-sf border border-bd2 rounded-2xl px-4 py-3.5 shadow-sm">
+            <p className="text-[11px] font-bold text-mu mb-1">내 계정</p>
+            <p className="text-sm font-bold text-tx">{email ?? "-"}</p>
           </div>
 
           {/* 로그아웃 */}

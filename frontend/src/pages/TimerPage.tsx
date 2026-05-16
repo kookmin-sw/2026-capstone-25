@@ -6,7 +6,7 @@ import { ChevronLeft } from "lucide-react";
 import CountdownRing from "../components/timer/CountdownRing";
 import { postTimeSpent } from "../services/timer";
 
-type Mode = "timepick" | "timer";
+type Mode = "timepick" | "timer" | "complete";
 
 // 빠른 선택 칩 목록 (분) — 덜 애매한 단위로 구성
 const QUICK_CHIPS = [15, 30, 45, 60];
@@ -44,7 +44,9 @@ export default function TimerPage() {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [isOn, isPaused, totalSec]);
 
-  // 타이머 종료 처리 — 경과 시간을 백엔드에 저장하고 /all로 이동.
+  const [spentMin, setSpentMin] = useState(0);
+
+  // 타이머 종료 처리 — 경과 시간을 백엔드에 저장하고 완료 화면으로 이동.
   // 60초 미만은 저장하지 않는다 (1초 실행해도 1분으로 올라가는 문제 방지).
   async function handleEnd(elapsed: number) {
     setIsOn(false);
@@ -52,7 +54,8 @@ export default function TimerPage() {
     if (stepId && mins >= 1) {
       try { await postTimeSpent(stepId, mins); } catch { /* 실패해도 화면은 이동 */ }
     }
-    navigate("/all");
+    setSpentMin(mins);
+    setMode("complete");
   }
 
   // 집중 시작
@@ -70,6 +73,30 @@ export default function TimerPage() {
     if (intervalRef.current) clearInterval(intervalRef.current);
     setIsOn(false);
     await handleEnd(elapsedSec);
+  }
+
+  // ── 완료 화면 ──
+  if (mode === "complete") {
+    return (
+      <main className="min-h-screen text-tx flex flex-col items-center justify-center px-[18px]">
+        <div className="w-full max-w-[480px] flex flex-col items-center gap-6 text-center">
+          <div className="text-6xl">🎉</div>
+          <div>
+            <h1 className="text-2xl font-black text-tx mb-2">한 단계 마무리!</h1>
+            {spentMin >= 1 && (
+              <p className="text-sm text-mu">{spentMin}분 집중했어요</p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate("/all")}
+            className="w-full rounded-xl bg-ac text-white py-4 text-sm font-black cursor-pointer hover:opacity-90 transition-opacity"
+          >
+            돌아가기
+          </button>
+        </div>
+      </main>
+    );
   }
 
   // ── 시간 설정 화면 ──
