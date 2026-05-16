@@ -109,6 +109,55 @@
 
 ---
 
+## ⚙️ 개발 환경 설정
+
+```bash
+npm install        # 의존성 설치
+npm run dev        # 프론트(5173) + 백엔드(4000) 동시 실행
+npm run typecheck  # 타입 체크
+npm run build      # 빌드
+```
+
+### 환경변수
+
+**`backend/.env`**
+
+| 변수 | 설명 |
+|---|---|
+| `ANTHROPIC_API_KEY` | Anthropic API 키 |
+| `ANTHROPIC_MODEL` | 모델 ID (기본: `claude-haiku-4-5-20251001`) |
+| `SUPABASE_URL` | Supabase 프로젝트 URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | service_role 키 |
+| `FRONTEND_ORIGIN` | 허용 도메인 (기본: `http://localhost:5173`) |
+| `PORT` | 서버 포트 (기본: `4000`) |
+
+**`frontend/.env`**
+
+| 변수 | 설명 |
+|---|---|
+| `VITE_SUPABASE_URL` | Supabase 프로젝트 URL |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon 키 |
+| `VITE_API_BASE_URL` | 백엔드 API URL (기본: `http://localhost:4000`) |
+
+---
+
+## 🚀 배포
+
+### Vercel (프론트)
+1. GitHub 연결 → **Root Directory**: `frontend` / **Framework**: Vite
+2. 환경변수: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_BASE_URL`
+
+### Railway (백엔드)
+1. GitHub 연결 → **Root Directory**: `backend`
+2. **Build Command**: `npm run build` / **Start Command**: `npm run start`
+3. 환경변수: `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `FRONTEND_ORIGIN`, `PORT`
+
+### Supabase
+- Auth → URL Configuration: **Site URL** + **Redirect URLs**에 Vercel 도메인 추가
+- 모든 테이블 RLS 활성 확인
+
+---
+
 ## 📝 소개 자료
 
 - [📊 중간 발표 자료](#)
