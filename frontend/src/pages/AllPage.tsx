@@ -128,9 +128,9 @@ export default function AllPage() {
   }
 
   return (
-    <div className="px-4 lg:px-8 py-6 max-w-[960px] 2xl:max-w-[1200px] mx-auto w-full">
+    <div className="px-[18px] py-6">
       <div className="mb-6">
-        <h1 className="text-xl font-black text-tx mb-2">나의 할 일</h1>
+        <h1 className="text-[22px] font-bold text-tx tracking-[-0.3px] mb-2">나의 할 일</h1>
         <div className="flex gap-4 text-xs text-mu">
           <span>
             진행중 <span className="font-black text-tx2">{ongoing}</span>

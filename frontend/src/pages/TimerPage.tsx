@@ -75,7 +75,7 @@ export default function TimerPage() {
   // ── 시간 설정 화면 ──
   if (mode === "timepick") {
     return (
-      <main className="min-h-screen bg-bg text-tx flex flex-col items-center px-6 py-10 max-w-lg mx-auto w-full">
+      <main className="min-h-screen text-tx flex flex-col items-center px-[18px] py-10 ">
         {/* 뒤로가기 */}
         <button
           type="button"
@@ -158,7 +158,7 @@ export default function TimerPage() {
 
   // ── 카운트다운 화면 ──
   return (
-    <main className="min-h-screen bg-bg text-tx flex flex-col items-center justify-between px-6 py-10 max-w-lg mx-auto w-full">
+    <main className="min-h-screen text-tx flex flex-col items-center justify-between px-[18px] py-10 ">
       <button
         type="button"
         onClick={() => { setMode("timepick"); setIsOn(false); if (intervalRef.current) clearInterval(intervalRef.current); }}

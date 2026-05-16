@@ -336,7 +336,7 @@ export default function ProjectDetailPage() {
   const ddayText = getDdayText(project.due);
 
   return (
-    <div className="px-4 lg:px-8 py-6 max-w-[720px] mx-auto w-full space-y-4">
+    <div className="px-[18px] py-6 space-y-4">
       {/* ── 헤더 — 뒤로가기 + 프로젝트명 + D-Day ── */}
       <div className="flex items-center gap-3">
         <button

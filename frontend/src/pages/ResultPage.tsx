@@ -357,7 +357,7 @@ export default function ResultPage() {
 
   if (isEditing) {
     return (
-      <div className="px-4 lg:px-8 py-6 max-w-[720px] mx-auto w-full">
+      <div className="px-[18px] py-6">
         {saving && <BusyBar text="프로젝트를 저장하는 중…" />}
         {error && (
           <div className="mb-3 text-[12.5px] text-rd bg-rd-s border border-rd-s rounded-[10px] px-3 py-2">
@@ -399,7 +399,7 @@ export default function ResultPage() {
   }
 
   return (
-    <div className="px-4 lg:px-8 py-6 max-w-[720px] mx-auto w-full">
+    <div className="px-[18px] py-6">
       {(busy || saving) && (
         <BusyBar text={saving ? "프로젝트를 저장하는 중…" : "다시 분해하는 중…"} />
       )}

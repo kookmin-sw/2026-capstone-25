@@ -136,7 +136,7 @@ export default function CalendarPage() {
     : `${selDateObj.getMonth() + 1}월 ${selDateObj.getDate()}일 ${DAY_NAMES[selDateObj.getDay()]}요일`;
 
   return (
-    <div className="flex flex-col min-h-full bg-bg px-[22px] pt-6 pb-6 gap-4">
+    <div className="flex flex-col min-h-full px-[18px] pt-6 pb-6 gap-4">
 
       {/* ── 헤더: 타이틀 + 오늘 버튼 + 토글 ── */}
       <div className="flex items-center justify-between gap-2">
@@ -200,7 +200,11 @@ export default function CalendarPage() {
                 >
                   <ChevronLeft size={18} />
                 </button>
-                <WeekStrip selectedDate={selectedDate} onSelect={setSelectedDate} />
+                <WeekStrip
+                  selectedDate={selectedDate}
+                  onSelect={setSelectedDate}
+                  assignedDates={new Set(assignments.map((a) => a.date))}
+                />
                 <button
                   type="button"
                   onClick={nextWeek}

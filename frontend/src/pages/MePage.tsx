@@ -13,8 +13,8 @@ export default function MePage() {
   }
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-8">나</h1>
+    <div className="px-[18px] py-6">
+      <h1 className="text-[22px] font-bold text-tx tracking-[-0.3px] mb-8">나</h1>
       <button
         onClick={handleLogout}
         className="flex items-center gap-2 rounded-xl border border-bd px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-50 transition-colors"

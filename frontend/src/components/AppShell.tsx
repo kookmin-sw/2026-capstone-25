@@ -78,7 +78,9 @@ export default function AppShell() {
       <div className="flex-1 flex flex-col min-h-screen lg:h-screen lg:min-h-0 lg:overflow-hidden pb-[calc(80px+env(safe-area-inset-bottom))] lg:pb-0">
         <Header todayMinutes={todayMinutes} />
         <main className="flex-1 lg:overflow-auto">
-          <Outlet />
+          <div className="w-full max-w-[900px] mx-auto">
+            <Outlet />
+          </div>
         </main>
       </div>
 

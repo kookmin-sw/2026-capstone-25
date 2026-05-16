@@ -103,7 +103,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="px-4 lg:px-8 py-6 max-w-[720px] mx-auto w-full">
+    <div className="px-[18px] py-6">
       <div className="text-[15px] font-bold text-tx mb-[14px] pl-[7px]">
         할 일을 작게 만들어볼까요?
       </div>

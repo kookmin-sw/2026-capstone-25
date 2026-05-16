@@ -82,7 +82,7 @@ export default function ReportPage() {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-full bg-bg px-[22px] pt-6 pb-6 gap-4">
+    <div className="flex flex-col min-h-full px-[18px] pt-6 pb-6 gap-4">
       <span className="text-[22px] font-bold text-tx tracking-[-0.3px]">리포트</span>
 
       {status === "loading" && (
