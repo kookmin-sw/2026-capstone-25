@@ -54,7 +54,6 @@ export default function ResultBlock({
             key={step.id}
             step={step}
             index={i}
-            defaultOpen={i === 0}
             subSteps={childrenByParent.get(step.id) ?? []}
             busySubDecompose={busySubDecomposeParentId === step.id}
             onSubDecompose={onSubDecompose}

@@ -93,7 +93,7 @@ export default function AllPage() {
       prev.map((p) => {
         if (p.firstStepId !== stepId) return p;
         const doneCount = done ? 1 : 0;
-        return { ...p, doneCount, progress: done ? 100 : 0, nextStep: done ? null : { id: stepId, title: p.title, estimatedMinutes: null } };
+        return { ...p, doneCount, progress: done ? 100 : 0, nextStep: done ? null : { id: stepId, title: p.title } };
       }),
     );
     try {

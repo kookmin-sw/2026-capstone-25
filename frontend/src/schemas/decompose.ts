@@ -93,28 +93,14 @@ export const StepSchema = z.object({
   parent_step_id: z.string().nullable(),
   title: z.string().min(1),
   description: z.string(),
-  guide: z.string(),
-  first_move: z.string(),
-  unblocker: z.string(),
-  estimated_minutes: z.number().int().nonnegative(),
   boundary_signal: BoundarySignalSchema,
-  done: z.boolean(),
-  time_spent: z.number().nonnegative(),
 });
 
 export type Step = z.infer<typeof StepSchema>;
 
 export const AnalysisSchema = z.object({
   primary_type: z.string(),
-  secondary_tags: z.array(z.string()),
   goal: z.string(),
-  current_position: z.object({
-    phase_label: z.string(),
-    phase_index: z.number().int().nonnegative(),
-  }),
-  constraints: z.array(z.string()),
-  needs_clarification: z.array(z.string()),
-  confidence: z.number().min(0).max(1),
 });
 
 export const ReasoningSchema = z.object({

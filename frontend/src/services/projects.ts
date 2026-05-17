@@ -19,12 +19,10 @@ export type ProjectSummary = {
   nextStep: {
     id: string;
     title: string;
-    estimatedMinutes: number | null;
   } | null;
   schedulableSteps: {
     id: string;
     title: string;
-    estimatedMinutes: number | null;
     parentStepId: string | null;
   }[];
   firstStepId: string | null;
@@ -61,11 +59,7 @@ export type StepDetail = {
   orderIdx: number;
   title: string;
   done: boolean;
-  estimatedMinutes: number | null;
   description: string | null;
-  guide: string | null;
-  firstMove: string | null;
-  unblocker: string | null;
   boundarySignal: string | null;
 };
 
@@ -110,10 +104,6 @@ export async function deleteProject(id: string) {
 export type CreateStepInput = {
   title: string;
   description?: string;
-  guide?: string;
-  firstMove?: string;
-  unblocker?: string;
-  estimatedMinutes?: number; // 백엔드는 positive int — 0/음수는 보내지 말 것
   boundarySignal?: string;
   children?: CreateStepInput[];
 };
@@ -122,9 +112,7 @@ export type CreateProjectInput = {
   title: string;
   memo?: string;
   primaryType?: string;
-  secondaryTags?: string[];
   goal: string;
-  currentPhase?: string;
   color?: string;
   startDate?: string;
   due?: string;

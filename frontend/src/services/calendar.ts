@@ -24,7 +24,6 @@ export type CalendarAssignment = {
     id: string;
     title: string;
     done: boolean;
-    estimatedMinutes: number | null;
   };
   project: {
     id: string;

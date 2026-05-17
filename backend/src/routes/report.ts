@@ -48,7 +48,6 @@ router.get("/weekly", async (req, res) => {
       id,
       updated_at,
       parent_step_id,
-      estimated_minutes,
       time_spent,
       decompositions (
         project_id,
@@ -72,7 +71,7 @@ router.get("/weekly", async (req, res) => {
       id, title, color, due, created_at,
       decompositions (
         id,
-        steps ( id, done, parent_step_id, time_spent, estimated_minutes )
+        steps ( id, done, parent_step_id, time_spent )
       )
     `)
     .eq("user_id", userId)

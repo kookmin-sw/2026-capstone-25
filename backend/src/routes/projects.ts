@@ -48,15 +48,11 @@ type StepRow = {
   order_idx: number;
   title: string;
   done: boolean;
-  estimated_minutes: number | null;
 };
 
 type StepDetailRow = StepRow & {
   parent_step_id: string | null;
   description: string | null;
-  guide: string | null;
-  first_move: string | null;
-  unblocker: string | null;
   boundary_signal: string | null;
 };
 
@@ -107,7 +103,7 @@ router.get("/", async (req, res) => {
   const { data: steps, error: stepsError } = decompositionIds.length
     ? await supabase
         .from("steps")
-        .select("id, decomposition_id, order_idx, title, done, estimated_minutes, parent_step_id")
+        .select("id, decomposition_id, order_idx, title, done, parent_step_id")
         .in("decomposition_id", decompositionIds)
         .order("order_idx", { ascending: true })
     : { data: [], error: null };
@@ -135,7 +131,7 @@ router.get("/", async (req, res) => {
       const firstStepId = projectSteps[0]?.id ?? null;
       const schedulableSteps = projectSteps
         .filter((step) => !step.done)
-        .map((step) => ({ id: step.id, title: step.title, estimatedMinutes: step.estimated_minutes, parentStepId: step.parent_step_id ?? null }));
+        .map((step) => ({ id: step.id, title: step.title, parentStepId: step.parent_step_id ?? null }));
 
       return {
         id: project.id,
@@ -152,7 +148,6 @@ router.get("/", async (req, res) => {
           ? {
               id: nextStep.id,
               title: nextStep.title,
-              estimatedMinutes: nextStep.estimated_minutes,
             }
           : null,
         schedulableSteps,
@@ -162,7 +157,7 @@ router.get("/", async (req, res) => {
   });
 });
 
-// 프로젝트 단건 상세 조회 — 단계 전체(가이드 포함)를 반환한다.
+// 프로젝트 단건 상세 조회 — 단계 전체를 반환한다.
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
 
@@ -196,7 +191,7 @@ router.get("/:id", async (req, res) => {
   if (decompositionId) {
     const { data: stepData, error: stepsError } = await supabase
       .from("steps")
-      .select("id, decomposition_id, parent_step_id, order_idx, title, done, estimated_minutes, description, guide, first_move, unblocker, boundary_signal")
+      .select("id, decomposition_id, parent_step_id, order_idx, title, done, description, boundary_signal")
       .eq("decomposition_id", decompositionId)
       .order("order_idx", { ascending: true });
 
@@ -231,11 +226,7 @@ router.get("/:id", async (req, res) => {
       orderIdx: s.order_idx,
       title: s.title,
       done: s.done,
-      estimatedMinutes: s.estimated_minutes,
       description: s.description,
-      guide: s.guide,
-      firstMove: s.first_move,
-      unblocker: s.unblocker,
       boundarySignal: s.boundary_signal,
     })),
   });
@@ -262,9 +253,7 @@ router.post("/", async (req, res) => {
       title: input.title,
       memo: input.memo,
       primary_type: input.primaryType,
-      secondary_tags: input.secondaryTags,
       goal: input.goal,
-      current_phase: input.currentPhase,
       color: assignedColor,
       start_date: input.startDate,
       due: input.due,
@@ -307,10 +296,6 @@ router.post("/", async (req, res) => {
         order_idx: index,
         title: step.title,
         description: step.description,
-        guide: step.guide,
-        first_move: step.firstMove,
-        unblocker: step.unblocker,
-        estimated_minutes: step.estimatedMinutes,
         boundary_signal: step.boundarySignal,
       })),
     )
@@ -327,10 +312,6 @@ router.post("/", async (req, res) => {
     order_idx: number;
     title: string;
     description?: string;
-    guide?: string;
-    first_move?: string;
-    unblocker?: string;
-    estimated_minutes?: number;
     boundary_signal?: string;
   }> = [];
   let nextChildOrderIdx = steps.length;
@@ -344,10 +325,6 @@ router.post("/", async (req, res) => {
         order_idx: nextChildOrderIdx++,
         title: child.title,
         description: child.description,
-        guide: child.guide,
-        first_move: child.firstMove,
-        unblocker: child.unblocker,
-        estimated_minutes: child.estimatedMinutes,
         boundary_signal: child.boundarySignal,
       });
     }
@@ -408,7 +385,7 @@ router.patch("/:id/steps", async (req, res) => {
   if (latestDecompId) {
     const { data: existingSteps } = await supabase
       .from("steps")
-      .select("id, decomposition_id, parent_step_id, order_idx, title, done, estimated_minutes, description, guide, first_move, unblocker, boundary_signal")
+      .select("id, decomposition_id, parent_step_id, order_idx, title, done, description, boundary_signal")
       .eq("decomposition_id", latestDecompId);
     for (const s of (existingSteps ?? []) as StepDetailRow[]) {
       existingStepMap.set(s.id, s);
@@ -433,11 +410,7 @@ router.patch("/:id/steps", async (req, res) => {
       order_idx: index,
       title: step.title,
       description: existing?.description ?? null,
-      guide: existing?.guide ?? null,
-      first_move: existing?.first_move ?? null,
-      unblocker: existing?.unblocker ?? null,
       boundary_signal: existing?.boundary_signal ?? null,
-      estimated_minutes: existing?.estimated_minutes ?? null,
       done: existing?.done ?? false,
     };
   });
@@ -457,11 +430,7 @@ router.patch("/:id/steps", async (req, res) => {
     order_idx: number;
     title: string;
     description: string | null;
-    guide: string | null;
-    first_move: string | null;
-    unblocker: string | null;
     boundary_signal: string | null;
-    estimated_minutes: number | null;
     done: boolean;
   }> = [];
   let nextChildOrderIdx = parsed.data.steps.length;
@@ -476,11 +445,7 @@ router.patch("/:id/steps", async (req, res) => {
         order_idx: nextChildOrderIdx++,
         title: child.title,
         description: existingChild?.description ?? null,
-        guide: existingChild?.guide ?? null,
-        first_move: existingChild?.first_move ?? null,
-        unblocker: existingChild?.unblocker ?? null,
         boundary_signal: existingChild?.boundary_signal ?? null,
-        estimated_minutes: existingChild?.estimated_minutes ?? null,
         done: existingChild?.done ?? false,
       });
     }
@@ -582,7 +547,7 @@ router.post("/:id/rounds/:round/restore", async (req, res) => {
 
   const { data: targetSteps, error: stepsError } = await supabase
     .from("steps")
-    .select("order_idx, title, description, guide, first_move, unblocker, estimated_minutes, boundary_signal")
+    .select("order_idx, title, description, boundary_signal")
     .eq("decomposition_id", targetDecomp.id)
     .order("order_idx", { ascending: true });
 
@@ -617,10 +582,6 @@ router.post("/:id/rounds/:round/restore", async (req, res) => {
       order_idx: s.order_idx,
       title: s.title,
       description: s.description,
-      guide: s.guide,
-      first_move: s.first_move,
-      unblocker: s.unblocker,
-      estimated_minutes: s.estimated_minutes,
       boundary_signal: s.boundary_signal,
       done: false,
     })),
@@ -713,10 +674,6 @@ router.post("/:projectId/sub-steps", async (req, res) => {
     order_idx: baseOrderIdx + index,
     title: step.title,
     description: step.description,
-    guide: step.guide,
-    first_move: step.firstMove,
-    unblocker: step.unblocker,
-    estimated_minutes: step.estimatedMinutes,
     boundary_signal: step.boundarySignal,
   }));
 
