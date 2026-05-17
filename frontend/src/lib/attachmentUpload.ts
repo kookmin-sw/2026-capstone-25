@@ -1,3 +1,8 @@
+// 분해 입력에 첨부할 파일의 클라이언트측 검증·업로드·정리 유틸.
+// 백엔드 schemas/decompose 의 superRefine 규칙을 거울처럼 적용해 1차 차단하고,
+// 통과한 파일만 Supabase Storage(`decompose-attachments` 버킷)로 올린 뒤 AttachmentRef 배열을 돌려준다.
+// 같은 내용은 같은 객체 경로(hash prefix)로 떨어지도록 해 재시도가 idempotent 하다.
+
 import { supabase } from "./supabase";
 import {
   ATTACHMENT_ALLOWED_MIME,

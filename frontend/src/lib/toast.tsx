@@ -1,3 +1,7 @@
+// 전역 토스트(사용자 행동을 막지 않고 결과만 살짝 알려줌) 알림 Provider 와 useToast 훅.
+// 화면 하단에 3초간 떠 있다 자동으로 사라지는 메시지를 띄우며,
+// `error`(빨강) 와 `success`(액센트색) 두 종류만 지원한다.
+
 import { createContext, useCallback, useContext, useState } from "react";
 import type { ReactNode } from "react";
 
