@@ -130,10 +130,6 @@ export default function ProjectDetailPage() {
       const stepsToSave: CreateStepInput[] = aiResponse.result.steps.map((s) => ({
         title: s.title,
         description: s.description || undefined,
-        guide: s.guide || undefined,
-        firstMove: s.first_move || undefined,
-        unblocker: s.unblocker || undefined,
-        estimatedMinutes: s.estimated_minutes > 0 ? s.estimated_minutes : undefined,
         boundarySignal: s.boundary_signal || undefined,
       }));
 
@@ -227,51 +223,6 @@ export default function ProjectDetailPage() {
     } finally {
       setIsSaving(false);
     }
-  }
-
-  // 버전 기록 토글 — 처음 열 때만 API 조회
-  async function handleToggleHistory() {
-    if (!id) return;
-    if (!showHistory && rounds.length === 0) {
-      setIsLoadingRounds(true);
-      try {
-        const data = await listRounds(id);
-        setRounds(data);
-      } catch {
-        showToast("버전 목록을 불러오지 못했어요.");
-        return;
-      } finally {
-        setIsLoadingRounds(false);
-      }
-    }
-    setShowHistory((prev) => !prev);
-  }
-
-  // 특정 버전 복원 — 성공 시 프로젝트 재조회
-  async function handleRestore(round: number) {
-    if (!id) return;
-    const ok = window.confirm(`버전 ${round}로 복원할까요? 현재 단계 목록은 새 버전으로 대체됩니다.`);
-    if (!ok) return;
-    setIsRestoring(true);
-    try {
-      await restoreRound(id, round);
-      const updated = await getProject(id);
-      setProject(updated);
-      setShowHistory(false);
-      setRounds([]);
-    } catch {
-      showToast("복원하지 못했어요. 다시 시도해 주세요.");
-    } finally {
-      setIsRestoring(false);
-    }
-  }
-
-  // trigger 한국어 변환
-  function triggerLabel(trigger: string): string {
-    if (trigger === "initial") return "최초 생성";
-    if (trigger === "edit") return "직접 편집";
-    if (trigger === "restore") return "버전 복원";
-    return trigger;
   }
 
   async function handleDelete() {
