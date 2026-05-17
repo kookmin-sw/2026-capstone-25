@@ -59,7 +59,7 @@
 | 결과 4블록 정식 분리 + 가이드 lazy-load | **재은** | R6 |
 | 하위 단계로 쪼개기 프론트 UI | **재은** | R7 |
 | RefineBlock 피드백 입력 + 버전 히스토리 | **재은** | R8 |
-| 템플릿 카탈로그 8 카테고리 + structureHint | **재은** | R9 |
+| 템플릿 카탈로그 5 카테고리 + structureHint | **재은** | R9 |
 | 첨부파일 업로드 + 텍스트 추출 | **재은** | R10 |
 | 분해 품질 회귀 케이스 + 프롬프트 보강 | **재은** | R11 |
 | 프로젝트 인라인 편집 | **지희** | J7 |
@@ -149,24 +149,24 @@
 - [x] "2단계 쪼개기" → "하위 단계로 쪼개기" 표현 통일 — 기수 오독 회피
 - [ ] (선택) 시스템 프롬프트에 "사용자 피드백 반영 규칙" 명시
 
-### R9. 템플릿 카탈로그 8 카테고리 + structureHint — **재은**
+### R9. 템플릿 카탈로그 5 카테고리 + structureHint — **재은**
 
 | 항목 | 내용 |
 |---|---|
 | **작업일** | _일 |
-| **선행 조건** | v1의 3개 템플릿(학업·개발·글쓰기) 카탈로그가 동작 중인 상태에서 시작. 비어 있다면 R9 안에서 함께 구축 |
-| **검증** | 8 카테고리(학업·개발·글쓰기·취업·창작·생활·여행·건강) 카드 그리드 표시. 카드 클릭 → 미리보기 바텀시트(아이콘+이름+규모/소요일+예시 5개+시작 버튼). "이 템플릿으로 시작" → 입력 폼 prefill + structureHint 백엔드 전달 |
-| **PR 브랜치** | `feat/template-catalog` |
+| **선행 조건** | v1 템플릿 카탈로그 없음 — R9에서 처음부터 구축. "쪼개고 싶은 확률이 높은 작업"만 선별 |
+| **검증** | 5 카테고리(학업·업무·취업·생활·여가) 가로 스크롤 칩 토글로 카드 그리드(아이콘+이름) 필터링. 카드 클릭 → 미리보기 바텀시트(아이콘+이름+흐름 노드+입력 안내+시작 버튼). "이 템플릿으로 시작" → 메모 prefill(제목·일정은 사용자 직접 입력) + structureHint를 templateHint로 백엔드 전달 |
+| **PR 브랜치** | `feat/templates` |
 
 **산출물**:
-- [ ] `services/templates.ts` — 8 카테고리 × 평균 2~3개 정적 배열 (§8.2 표 기준)
-- [ ] `Template` 타입 — id, category, name, icon, summary, prefill, customFields, scaleHint, structureHint, previewChunks, featured
-- [ ] `components/template/TemplateCard.tsx` — 카드 그리드 셀
-- [ ] `components/template/TemplatePreviewSheet.tsx` — 바텀시트(§8.4)
-- [ ] `pages/HomePage.tsx`의 "템플릿" 탭 — 카테고리 섹션 + 추천(featured) 영역
-- [ ] 선택 시 InputForm prefill (제목·기간·메모 placeholder) + 템플릿 뱃지 표시
-- [ ] `backend/src/prompts/decompose-system.ts`에 `structureHint`가 있을 때만 동적 user 메시지에 부착(접두부 캐시 보존)
-- [ ] 결과 화면에 "📋 템플릿 기반" 출처 뱃지(§8.5)
+- [x] `services/templates.ts` — 5 카테고리(학업·업무·취업·생활·여가) × 16개 정적 배열 + `CATEGORY_META`·`CATEGORY_ORDER`·`joinCustomFieldsAsMemo`
+- [x] `Template` 타입 — id, category, name, icon, customFields, structureHint, previewChunks, featured
+- [x] `components/template/TemplateCard.tsx` — 카드 그리드 셀(아이콘 + 이름만)
+- [x] `components/template/TemplatePreviewSheet.tsx` — 바텀시트(흐름 노드 + "이런 정보들이 입력되면 좋아요" 안내, §8.4)
+- [x] `pages/HomePage.tsx`의 "템플릿" 탭 — 가로 스크롤 카테고리 칩 [추천 · 전체 · 학업 · 업무 · 취업 · 생활 · 여가] 토글
+- [x] 선택 시 메모 prefill(`customFields` placeholder) + 템플릿 뱃지 + 해제 버튼
+- [x] `backend/src/routes/decompose.ts` `buildUserMessage` 가 `templateHint` 존재 시 `# 템플릿 힌트` 섹션을 동적 user 메시지에 부착(시스템 프롬프트 접두부 캐시 보존)
+- [x] 결과 화면(`ResultBlock`)에 `input.templateHint` 존재 시 "📋 템플릿 기반" 출처 뱃지(§8.5)
 
 ### R10. 첨부파일 업로드 + 텍스트 추출 — **재은**
 
@@ -193,24 +193,6 @@
 - [x] 의존성 추가: `mammoth` 1개 (PDF/이미지는 Anthropic 네이티브, multer 는 multipart 미사용으로 불필요)
 - [x] `supabase/migrations/006_decompose_attachments.sql` (신규) — 버킷 `decompose-attachments` 생성 + `storage.objects` 에 본인 폴더 RLS 정책 3개 (INSERT/SELECT/DELETE)
 - [x] **재첨부 방지 흐름 통합** — 사용자가 새로고침·재분해·돌리기 어떤 경우에도 파일 재선택 불필요. (a) Storage 가 영구 저장소, (b) sessionStorage 캐시가 입력+응답 들고 있음, (c) 백엔드 LRU 캐시가 추출 결과 들고 있음 — 세 층이 함께 작동
-
-### R11. 분해 품질 회귀 케이스 + 프롬프트 보강 — **재은**
-
-| 항목 | 내용 |
-|---|---|
-| **작업일** | _일 |
-| **선행 조건** | R6~R10 동작 |
-| **검증** | 회귀 케이스 10~15개를 `backend/scripts/regression.ts`로 실행 → 각 케이스의 단계 수 · boundary_signal 분포 · 모호 동사 비율을 표로 출력. 90% 이상 케이스가 §1.2 가치(의미 우선·사용자 주도·설명 가능성)를 만족 |
-| **PR 브랜치** | `feat/decompose-quality` |
-
-**산출물**:
-- [ ] `backend/scripts/regression-cases.json` — 입력 10~15개 (학업·개발·글쓰기·생활 혼합)
-- [ ] `backend/scripts/regression.ts` — 각 케이스를 `/api/decompose`로 호출 → 응답 모음 → 통계 출력
-- [ ] `backend/src/prompts/decompose-system.ts` 보강
-  - 모호 동사 자동 리라이트 예시 1~2개 추가(§4.3)
-  - 외부 대기 흡수 규칙 예시 추가(§5.2)
-  - few-shot 1~2개 추가(석사 논문 예시 §6.1 활용)
-- [ ] 회귀 결과 요약을 `docs/decompose-quality.md`에 기록
 
 ---
 
