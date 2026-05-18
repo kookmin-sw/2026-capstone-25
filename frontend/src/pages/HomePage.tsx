@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import type { DecomposeRequest } from "../schemas/decompose";
 import { createProject } from "../services/projects";
+import { useToast } from "../lib/toast";
 import {
   CATEGORY_META,
   CATEGORY_ORDER,
@@ -85,6 +86,9 @@ export default function HomePage() {
       const ext = dot >= 0 ? f.name.slice(dot).toLowerCase() : "";
       return ACCEPTED_FILE_EXT.includes(ext);
     });
+    if (files.length + picked.length > MAX_FILES) {
+      showToast(`최대 ${MAX_FILES}개까지만 첨부할 수 있어요`);
+    }
     setFiles((prev) => [...prev, ...picked].slice(0, MAX_FILES));
     e.target.value = ""; // 같은 파일 재선택을 위해 초기화
   }

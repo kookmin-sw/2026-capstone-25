@@ -180,7 +180,7 @@ export default function AllPage() {
             onClick={toggleSelectionMode}
             className="text-xs font-black text-mu hover:text-tx transition-colors"
           >
-            {selectionMode ? "취소" : "선택"}
+            {selectionMode ? "취소" : "선택 삭제"}
           </button>
         )}
       </div>
