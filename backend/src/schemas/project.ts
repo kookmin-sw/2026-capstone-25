@@ -6,10 +6,6 @@ import { z } from "zod";
 type CreateStepInputShape = {
   title: string;
   description?: string;
-  guide?: string;
-  firstMove?: string;
-  unblocker?: string;
-  estimatedMinutes?: number;
   boundarySignal?: string;
   children?: CreateStepInputShape[];
 };
@@ -18,10 +14,6 @@ export const CreateStepSchema: z.ZodType<CreateStepInputShape> = z.lazy(() =>
   z.object({
     title: z.string().min(1),
     description: z.string().optional(),
-    guide: z.string().optional(),
-    firstMove: z.string().optional(),
-    unblocker: z.string().optional(),
-    estimatedMinutes: z.number().int().positive().optional(),
     boundarySignal: z.string().optional(),
     children: z.array(CreateStepSchema).optional(),
   }),
@@ -31,9 +23,7 @@ export const CreateProjectSchema = z.object({
   title: z.string().min(1).max(200),
   memo: z.string().max(5000).optional(),
   primaryType: z.string().optional(),
-  secondaryTags: z.array(z.string()).default([]),
   goal: z.string().min(1),
-  currentPhase: z.string().optional(),
   color: z.string().optional(),
   startDate: z.string().date().optional(),
   due: z.string().date().optional(),

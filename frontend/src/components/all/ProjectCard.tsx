@@ -1,33 +1,43 @@
-// AI로 분해된 일반 프로젝트 카드.
-// 카드 전체 클릭 → 상세 이동. 삭제는 상세 페이지에서 처리.
-// 다음 할 일 영역 클릭 → 타이머로 바로 이동.
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { ProjectSummary } from "../../services/projects";
 
 type Props = {
   project: ProjectSummary;
   onDelete: (id: string) => void;
+  selectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
 };
 
-export default function ProjectCard({ project, onDelete: _ }: Props) {
+export default function ProjectCard({ project, onDelete: _, selectionMode, isSelected, onToggleSelect }: Props) {
   const navigate = useNavigate();
   const isDone = project.progress >= 100;
 
   return (
     <article
-      className="bg-sf border border-bd2 rounded-2xl px-4 py-4 shadow-sm cursor-pointer hover:border-bd transition-colors"
-      onClick={() => navigate(`/all/${project.id}`)}
+      className={[
+        "bg-sf border rounded-2xl px-4 py-4 shadow-sm cursor-pointer transition-all",
+        selectionMode ? "" : "hover:border-bd",
+        isSelected ? "border-ac bg-ac-s" : "border-bd2",
+      ].join(" ")}
+      onClick={selectionMode ? () => onToggleSelect?.(project.id) : () => navigate(`/all/${project.id}`)}
     >
       <div className="flex items-start gap-3">
-        <span
-          aria-hidden
-          className="mt-1.5 w-2.5 h-2.5 rounded-full shrink-0"
-          style={{
-            backgroundColor: project.color ?? "var(--color-ac)",
-            boxShadow: `0 0 0 3px ${project.color ?? "var(--color-ac)"}25`,
-          }}
-        />
+        {selectionMode ? (
+          <span className={["mt-1 w-5 h-5 rounded-[5px] border-2 flex items-center justify-center shrink-0 transition-all", isSelected ? "border-ac bg-ac" : "border-bd bg-sf"].join(" ")}>
+            {isSelected && <Check size={11} strokeWidth={3} color="white" />}
+          </span>
+        ) : (
+          <span
+            aria-hidden
+            className="mt-1.5 w-2.5 h-2.5 rounded-full shrink-0"
+            style={{
+              backgroundColor: project.color ?? "var(--color-ac)",
+              boxShadow: `0 0 0 3px ${project.color ?? "var(--color-ac)"}25`,
+            }}
+          />
+        )}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h2
@@ -45,7 +55,7 @@ export default function ProjectCard({ project, onDelete: _ }: Props) {
             )}
           </div>
         </div>
-        <ChevronRight size={18} className="mt-0.5 text-mu shrink-0" aria-hidden />
+        {!selectionMode && <ChevronRight size={18} className="mt-0.5 text-mu shrink-0" aria-hidden />}
       </div>
 
       {/* 진행률 바 */}

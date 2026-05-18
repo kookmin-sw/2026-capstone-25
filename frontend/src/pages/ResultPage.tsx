@@ -232,21 +232,23 @@ export default function ResultPage() {
     }
 
     const next: DecomposeRequest = { ...input, refineMode: mode };
-    if (mode === "feedback") {
-      // 피드백 모드만 직전 결과를 압축해서 같이 보낸다 — 사용자의 참조 표현("3번째 단계…") 해석 근거.
-      next.refineFeedback = feedback?.trim() || undefined;
-      const topLevel = (data?.result.steps ?? []).filter((s) => s.parent_step_id === null);
-      if (topLevel.length > 0) {
-        next.previousSteps = topLevel.map((s) => ({
-          id: s.id,
-          title: s.title,
-          description: s.description,
-        }));
-      }
+    // 세 모드 모두 직전 1차 단계를 함께 보낸다 — 모델이 "이전 대비" 기준을 가질 수 있도록.
+    // anchoring(이전 결과 단순 분리/병합) 회피는 서버 측 재분해 지시문에서 처리한다.
+    const topLevel = (data?.result.steps ?? []).filter((s) => s.parent_step_id === null);
+    if (topLevel.length > 0) {
+      next.previousSteps = topLevel.map((s) => ({
+        id: s.id,
+        title: s.title,
+        description: s.description,
+      }));
     } else {
-      // smaller/larger는 이전 호출 잔여 필드를 묻혀 보내지 않도록 명시적으로 비운다.
-      next.refineFeedback = undefined;
       next.previousSteps = undefined;
+    }
+    if (mode === "feedback") {
+      next.refineFeedback = feedback?.trim() || undefined;
+    } else {
+      // smaller/larger는 이전 호출의 feedback 잔여를 명시적으로 비운다.
+      next.refineFeedback = undefined;
     }
     void runDecompose(next, { pushHistory: true });
   }
@@ -416,16 +418,7 @@ export default function ResultPage() {
   }
 
   if (!data && error) {
-    return (
-      <ErrorView
-        message={error}
-        onRetry={() => {
-          firedRef.current = false;
-          void runDecompose(input, { pushHistory: false });
-        }}
-        onBack={() => navigate("/")}
-      />
-    );
+    return <ErrorView message={error} onBack={() => navigate("/")} />;
   }
 
   if (!data) return null;
@@ -488,6 +481,7 @@ export default function ResultPage() {
         projectTitle={input.title}
         data={data}
         busySubDecomposeParentId={busySubParentId}
+        isTemplateSourced={!!input.templateHint?.trim()}
         onSubDecompose={handleSubDecompose}
         onCancelSubSteps={handleCancelSubSteps}
       />
@@ -506,7 +500,6 @@ export default function ResultPage() {
 }
 
 // 분해 응답 + 입력을 백엔드 CreateProjectSchema 모양으로 매핑한다.
-// estimated_minutes는 백엔드 positive int 검증 — 0/음수면 보내지 않는다(undefined).
 // goal은 빈 문자열일 가능성에 대비해 입력 title을 fallback으로 둔다.
 // editedSteps가 주어지면(편집 모드 저장) 그 트리 모양으로 단계를 구성한다.
 // tempId가 원본 AI 단계 id와 일치하고 제목도 그대로면 AI 가이드를 보존, 신규/제목 변경 시 title만 보낸다.
@@ -521,9 +514,7 @@ function buildCreateProjectInput(
     title: req.title,
     memo: req.memo?.trim() || undefined,
     primaryType: analysis.primary_type || undefined,
-    secondaryTags: analysis.secondary_tags ?? [],
     goal: analysis.goal?.trim() || req.title,
-    currentPhase: analysis.current_position?.phase_label || undefined,
     startDate: req.startDate,
     due: req.dueDate,
   };
@@ -536,10 +527,6 @@ function buildCreateProjectInput(
     return {
       title: s.title,
       description: s.description || undefined,
-      guide: s.guide || undefined,
-      firstMove: s.first_move || undefined,
-      unblocker: s.unblocker || undefined,
-      estimatedMinutes: s.estimated_minutes > 0 ? s.estimated_minutes : undefined,
       boundarySignal: s.boundary_signal || undefined,
     };
   }
@@ -620,25 +607,16 @@ function LoadingView({ uploading = false }: { uploading?: boolean }) {
 
 function ErrorView({
   message,
-  onRetry,
   onBack,
 }: {
   message: string;
-  onRetry: () => void;
   onBack: () => void;
 }) {
   return (
     <div className="px-4 lg:px-8 py-10 max-w-[520px] mx-auto w-full text-center">
       <div className="text-lg font-bold text-tx mb-2">분해에 실패했어요</div>
       <div className="text-[13px] text-mu mb-5 break-words">{message}</div>
-      <div className="flex gap-2 justify-center">
-        <button
-          type="button"
-          onClick={onRetry}
-          className="bg-ac text-white border-none rounded-[12px] px-4 py-2 text-sm font-bold cursor-pointer"
-        >
-          다시 시도
-        </button>
+      <div className="flex justify-center">
         <button
           type="button"
           onClick={onBack}

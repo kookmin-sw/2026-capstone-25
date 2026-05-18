@@ -34,7 +34,6 @@ router.get("/", async (req, res) => {
         id,
         title,
         done,
-        estimated_minutes,
         decompositions (
           projects (
             id,
@@ -68,7 +67,6 @@ router.get("/", async (req, res) => {
         id: step.id,
         title: step.title,
         done: step.done,
-        estimatedMinutes: step.estimated_minutes ?? null,
       },
       project: {
         id: project.id,

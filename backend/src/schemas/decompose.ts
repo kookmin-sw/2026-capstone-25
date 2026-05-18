@@ -9,7 +9,8 @@ export const RefineModeSchema = z.enum(["smaller", "larger", "feedback"]);
 export type RefineMode = z.infer<typeof RefineModeSchema>;
 
 // 직전 분해 결과 압축 — refineMode === "feedback" 일 때만 의미 있음.
-// title/description만 보낸다. AI가 새 경계를 자유롭게 다시 판단하도록 guide/first_move 등 메타 필드는 일부러 뺀다.
+// title/description만 보낸다. boundary_signal 같은 부가 필드까지 같이 보내면
+// 모델이 그 표현에 묶여(anchoring) 새 경계를 못 찾으므로 단계의 정체성만 남긴다.
 export const PreviousStepSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1),
@@ -106,26 +107,12 @@ export const StepSchema = z.object({
   parent_step_id: z.string().nullable(),
   title: z.string().min(1),
   description: z.string(),
-  guide: z.string(),
-  first_move: z.string(),
-  unblocker: z.string(),
-  estimated_minutes: z.number().int().nonnegative(),
   boundary_signal: BoundarySignalSchema,
-  done: z.boolean(),
-  time_spent: z.number().nonnegative(),
 });
 
 export const AnalysisSchema = z.object({
   primary_type: z.string(),
-  secondary_tags: z.array(z.string()),
   goal: z.string(),
-  current_position: z.object({
-    phase_label: z.string(),
-    phase_index: z.number().int().nonnegative(),
-  }),
-  constraints: z.array(z.string()),
-  needs_clarification: z.array(z.string()),
-  confidence: z.number().min(0).max(1),
 });
 
 export const ReasoningSchema = z.object({

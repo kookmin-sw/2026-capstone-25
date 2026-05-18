@@ -135,14 +135,14 @@ export default function DayList({ assignments, selectionMode, selectedIds, onTog
                       type="button"
                       onClick={(e) => { e.stopPropagation(); void handleToggleDone(a.step.id, a.step.done); }}
                       className={[
-                        "shrink-0 w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-150 cursor-pointer",
+                        "shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-150 cursor-pointer",
                         a.step.done
                           ? "bg-gn border-gn"
                           : "bg-transparent border-bd2 hover:border-gn",
                       ].join(" ")}
                       aria-label={a.step.done ? "완료 취소" : "완료 표시"}
                     >
-                      {a.step.done && <Check size={14} strokeWidth={2.5} color="white" />}
+                      {a.step.done && <Check size={11} strokeWidth={2.5} color="white" />}
                     </button>
                     <div className="flex flex-col shrink-0">
                       <button

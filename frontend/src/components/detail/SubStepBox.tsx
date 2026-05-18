@@ -10,28 +10,16 @@ type Props = {
   subSteps: StepDetail[];
   color: string | null;
   onToggle: (id: string, done: boolean) => void;
-  onCancelSubSteps?: (parent: StepDetail) => void;
 };
 
-export default function SubStepBox({ parent, subSteps, color, onToggle, onCancelSubSteps }: Props) {
+export default function SubStepBox({ parent, subSteps, color, onToggle }: Props) {
   const navigate = useNavigate();
   const accentColor = color ?? "var(--color-ac)";
   const parentDone = parent.done;
 
   return (
     <div className="bg-fa border border-bd2 rounded-xl px-3 py-3 space-y-2">
-      <div className="flex items-center justify-between">
-        <p className="text-[11px] font-bold text-ac-d tracking-wide">📂 하위 단계 {subSteps.length}개</p>
-        {onCancelSubSteps && (
-          <button
-            type="button"
-            onClick={() => onCancelSubSteps(parent)}
-            className="text-[11px] font-bold text-mu hover:text-rd transition-colors cursor-pointer"
-          >
-            전체 취소
-          </button>
-        )}
-      </div>
+      <p className="text-[11px] font-bold text-ac-d tracking-wide">📂 하위 단계 {subSteps.length}개</p>
       {subSteps.map((sub, idx) => (
         <div
           key={sub.id}

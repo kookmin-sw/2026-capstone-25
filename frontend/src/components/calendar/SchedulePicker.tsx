@@ -14,7 +14,7 @@ type Props = {
   onAssigned: () => void;
 };
 
-function dDayLabel(due: string): string | null {
+function dDayLabel(due: string): string {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const dueDate = new Date(due + "T00:00:00");
@@ -164,7 +164,7 @@ export default function SchedulePicker({ date, dateLabel, existingAssignments, o
                           {p.title}
                         </span>
                         {dd && (
-                          <span className="text-[11px] font-medium text-tx2 shrink-0">{dd}</span>
+                          <span className="text-[11px] font-medium text-mu2 shrink-0">{dd}</span>
                         )}
                       </div>
                     )}
@@ -209,7 +209,7 @@ export default function SchedulePicker({ date, dateLabel, existingAssignments, o
                               {step.title}
                             </span>
                             {p.isSingle && !indent && dd && (
-                              <span className="text-[11px] font-medium text-tx2 shrink-0">{dd}</span>
+                              <span className="text-[11px] font-medium text-mu2 shrink-0">{dd}</span>
                             )}
                           </button>
                         );

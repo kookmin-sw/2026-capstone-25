@@ -1,3 +1,7 @@
+// fetch 래퍼와 HTTP 응답 검증 유틸.
+// 네트워크 단절·401·422·일반 에러를 한국어 사용자 메시지로 통일하고,
+// 401일 때는 로그인 페이지로 강제 이동시킨다.
+
 const NETWORK_ERROR_MESSAGE = "서버에 연결하지 못했어요. 네트워크 상태를 확인해 주세요.";
 const VALIDATION_ERROR_MESSAGE = "입력값을 확인해 주세요.";
 

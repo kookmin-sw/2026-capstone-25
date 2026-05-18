@@ -1,12 +1,13 @@
 // 타이머 페이지 — 시간 설정(timepick)과 카운트다운(timer) 두 모드를 하나의 페이지에서 처리한다.
-// 완료 or 종료 시 time_spent를 백엔드에 누적하고 /all로 이동한다.
+// 완료 or 종료 시 time_spent를 백엔드에 누적하고 완료 화면으로 이동한다.
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import CountdownRing from "../components/timer/CountdownRing";
 import { postTimeSpent } from "../services/timer";
+import { toggleStep } from "../services/projects";
 
-type Mode = "timepick" | "timer";
+type Mode = "timepick" | "timer" | "complete";
 
 // 빠른 선택 칩 목록 (분) — 덜 애매한 단위로 구성
 const QUICK_CHIPS = [15, 30, 45, 60];
@@ -44,7 +45,9 @@ export default function TimerPage() {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [isOn, isPaused, totalSec]);
 
-  // 타이머 종료 처리 — 경과 시간을 백엔드에 저장하고 /all로 이동.
+  const [spentSec, setSpentSec] = useState(0);
+
+  // 타이머 종료 처리 — 경과 시간을 백엔드에 저장하고 완료 화면으로 이동.
   // 60초 미만은 저장하지 않는다 (1초 실행해도 1분으로 올라가는 문제 방지).
   async function handleEnd(elapsed: number) {
     setIsOn(false);
@@ -52,7 +55,8 @@ export default function TimerPage() {
     if (stepId && mins >= 1) {
       try { await postTimeSpent(stepId, mins); } catch { /* 실패해도 화면은 이동 */ }
     }
-    navigate("/all");
+    setSpentSec(elapsed);
+    setMode("complete");
   }
 
   // 집중 시작
@@ -70,6 +74,62 @@ export default function TimerPage() {
     if (intervalRef.current) clearInterval(intervalRef.current);
     setIsOn(false);
     await handleEnd(elapsedSec);
+  }
+
+  // ── 완료 화면 ──
+  if (mode === "complete") {
+    const mm = String(Math.floor(spentSec / 60)).padStart(2, "0");
+    const ss = String(spentSec % 60).padStart(2, "0");
+
+    async function markDone() {
+      if (stepId) {
+        try { await toggleStep(stepId, true); } catch { /* 실패해도 이동 */ }
+      }
+      navigate("/all");
+    }
+
+    return (
+      <main className="min-h-screen text-tx flex flex-col justify-between px-[18px] py-10">
+        <div className="w-full max-w-[480px] mx-auto flex flex-col flex-1 items-center justify-center gap-4 text-center">
+          <div className="text-[52px] mb-2">🎉</div>
+          <h1 className="text-xl font-black text-tx">한 단계 마무리!</h1>
+          {spentSec >= 60 && (
+            <>
+              <p
+                className="font-black text-ac-d leading-none"
+                style={{ fontSize: "72px", letterSpacing: "-3px", fontVariantNumeric: "tabular-nums" }}
+              >
+                {mm}:{ss}
+              </p>
+              <p className="text-sm text-mu -mt-2">이번 세션 집중 시간</p>
+            </>
+          )}
+        </div>
+        <div className="w-full max-w-[480px] mx-auto flex flex-col gap-3">
+          <button
+            type="button"
+            onClick={() => { setMode("timepick"); setElapsedSec(0); }}
+            className="w-full rounded-xl bg-ac text-white py-4 text-sm font-black cursor-pointer shadow-[0_4px_14px_rgba(255,107,61,0.35)] hover:opacity-90 transition-opacity"
+          >
+            시간 연장하기
+          </button>
+          <button
+            type="button"
+            onClick={() => void markDone()}
+            className="w-full rounded-xl border border-ac bg-ac-s text-ac-d py-4 text-sm font-black cursor-pointer hover:opacity-90 transition-opacity"
+          >
+            할 일을 완료했어요!
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/all")}
+            className="w-full py-3 text-sm font-bold text-mu cursor-pointer hover:text-tx transition-colors"
+          >
+            다음에 이어서 할게요
+          </button>
+        </div>
+      </main>
+    );
   }
 
   // ── 시간 설정 화면 ──

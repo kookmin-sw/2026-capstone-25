@@ -63,6 +63,8 @@ export default function AllPage() {
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [error, setError] = useState("");
   const [tab, setTab] = useState<"ongoing" | "completed">("ongoing");
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   async function loadProjects() {
     setStatus("loading");
@@ -91,7 +93,7 @@ export default function AllPage() {
       prev.map((p) => {
         if (p.firstStepId !== stepId) return p;
         const doneCount = done ? 1 : 0;
-        return { ...p, doneCount, progress: done ? 100 : 0, nextStep: done ? null : { id: stepId, title: p.title, estimatedMinutes: null } };
+        return { ...p, doneCount, progress: done ? 100 : 0, nextStep: done ? null : { id: stepId, title: p.title } };
       }),
     );
     try {
@@ -106,6 +108,28 @@ export default function AllPage() {
     if (!ok) return;
     await deleteProject(id);
     setProjects((current) => current.filter((project) => project.id !== id));
+  }
+
+  function toggleSelectionMode() {
+    setSelectionMode((prev) => !prev);
+    setSelectedIds(new Set());
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function deleteSelected() {
+    const ids = [...selectedIds];
+    setProjects((prev) => prev.filter((p) => !ids.includes(p.id)));
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+    await Promise.all(ids.map((id) => deleteProject(id))).catch(() => void loadProjects());
   }
 
   if (status === "loading") {
@@ -134,14 +158,13 @@ export default function AllPage() {
 
   return (
     <div className="px-[18px] py-6 pb-24">
-      <div className="mb-6">
-        <h1 className="text-[22px] font-bold text-tx tracking-[-0.3px] mb-3">나의 할 일</h1>
+      <div className="mb-6 flex items-center justify-between">
         <div className="inline-flex bg-fa rounded-[10px] p-[3px] gap-[3px]">
           {(["ongoing", "completed"] as const).map((t) => (
             <button
               key={t}
               type="button"
-              onClick={() => setTab(t)}
+              onClick={() => { setTab(t); setSelectionMode(false); setSelectedIds(new Set()); }}
               className={[
                 "px-3 py-1.5 rounded-lg text-[12px] font-bold cursor-pointer transition-all",
                 tab === t ? "bg-sf text-tx shadow-[0_1px_3px_rgba(0,0,0,0.08)]" : "text-mu",
@@ -151,6 +174,15 @@ export default function AllPage() {
             </button>
           ))}
         </div>
+        {groups.length > 0 && (
+          <button
+            type="button"
+            onClick={toggleSelectionMode}
+            className="text-xs font-black text-mu hover:text-tx transition-colors"
+          >
+            {selectionMode ? "취소" : "선택 삭제"}
+          </button>
+        )}
       </div>
 
       {groups.length === 0 && (
@@ -173,9 +205,23 @@ export default function AllPage() {
             <div className="grid gap-[14px] xl:grid-cols-2 2xl:grid-cols-3 items-start">
               {group.projects.map((project) =>
                 project.isSingle ? (
-                  <SingleCard key={project.id} project={project} onDelete={handleDelete} onToggle={handleToggle} />
+                  <SingleCard
+                    key={project.id}
+                    project={project}
+                    onToggle={handleToggle}
+                    selectionMode={selectionMode}
+                    isSelected={selectedIds.has(project.id)}
+                    onToggleSelect={toggleSelect}
+                  />
                 ) : (
-                  <ProjectCard key={project.id} project={project} onDelete={handleDelete} />
+                  <ProjectCard
+                    key={project.id}
+                    project={project}
+                    onDelete={handleDelete}
+                    selectionMode={selectionMode}
+                    isSelected={selectedIds.has(project.id)}
+                    onToggleSelect={toggleSelect}
+                  />
                 ),
               )}
             </div>
@@ -183,6 +229,18 @@ export default function AllPage() {
         ))}
       </div>
 
+      {selectionMode && (
+        <div className="fixed bottom-0 left-0 right-0 lg:left-[248px] z-20 border-t border-bd2 bg-sf px-[18px] pt-3 pb-[max(20px,calc(env(safe-area-inset-bottom)+12px))]">
+          <button
+            type="button"
+            onClick={() => void deleteSelected()}
+            disabled={selectedIds.size === 0}
+            className="w-full rounded-xl bg-fa border border-bd py-3 text-sm font-black text-mu disabled:opacity-40 transition-opacity hover:bg-bd2"
+          >
+            {selectedIds.size > 0 ? `${selectedIds.size}개 삭제` : "항목을 선택하세요"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

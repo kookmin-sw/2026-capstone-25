@@ -9,17 +9,13 @@ import StepRow from "../components/detail/StepRow";
 import StepEditor, { type EditableStep } from "../components/edit/StepEditor";
 import {
   deleteProject,
-  deleteSubSteps,
   editSteps,
   getProject,
-  listRounds,
-  restoreRound,
   saveSubSteps,
   toggleStep,
   type CreateStepInput,
   type EditStepInput,
   type ProjectDetail,
-  type RoundInfo,
   type StepDetail,
 } from "../services/projects";
 import { decomposeSub } from "../services/decompose";
@@ -64,12 +60,6 @@ export default function ProjectDetailPage() {
   const [editableStartDate, setEditableStartDate] = useState<string>("");
   const [editableDue, setEditableDue] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
-
-  // 버전 기록 상태
-  const [showHistory, setShowHistory] = useState(false);
-  const [rounds, setRounds] = useState<RoundInfo[]>([]);
-  const [isLoadingRounds, setIsLoadingRounds] = useState(false);
-  const [isRestoring, setIsRestoring] = useState(false);
 
   // 2차 분해 호출 중인 부모 step id — 해당 카드의 "2단계 쪼개기" 버튼만 비활성
   const [busySubParentId, setBusySubParentId] = useState<string | null>(null);
@@ -140,10 +130,6 @@ export default function ProjectDetailPage() {
       const stepsToSave: CreateStepInput[] = aiResponse.result.steps.map((s) => ({
         title: s.title,
         description: s.description || undefined,
-        guide: s.guide || undefined,
-        firstMove: s.first_move || undefined,
-        unblocker: s.unblocker || undefined,
-        estimatedMinutes: s.estimated_minutes > 0 ? s.estimated_minutes : undefined,
         boundarySignal: s.boundary_signal || undefined,
       }));
 
@@ -154,34 +140,6 @@ export default function ProjectDetailPage() {
       showToast(err instanceof Error ? err.message : "하위 단계로 쪼개기에 실패했어요.");
     } finally {
       setBusySubParentId(null);
-    }
-  }
-
-  // "세부 단계 수정" — 전체 단계 인라인 편집 모드 진입(§10.3.3 표 ② "세부 단계 수정").
-  // 결과 화면과 동일하게 1·2차를 들여쓰기로 펼쳐 편집한다.
-  function handleEditSubSteps(_parent: StepDetail) {
-    handleEditStart();
-  }
-
-  // 특정 부모 단계의 하위 단계 전체 폐기 — SubStepBox의 "전체 취소" 버튼이 호출.
-  // 낙관적 UI: 화면에서 즉시 자식 제거 후 DELETE. 실패 시 재조회로 복구.
-  async function handleCancelSubSteps(parent: StepDetail) {
-    if (!project || !id) return;
-    const prevSteps = project.steps;
-    const nextSteps = prevSteps.filter((s) => s.parentStepId !== parent.id);
-    setProject({ ...project, ...calcProgress(nextSteps), steps: nextSteps });
-
-    try {
-      await deleteSubSteps(id, parent.id);
-    } catch {
-      // 실패 시 서버 상태로 복구
-      try {
-        const updated = await getProject(id);
-        setProject(updated);
-      } catch {
-        // 재조회도 실패하면 직전 state로 롤백
-        setProject({ ...project, steps: prevSteps });
-      }
     }
   }
 
@@ -265,51 +223,6 @@ export default function ProjectDetailPage() {
     } finally {
       setIsSaving(false);
     }
-  }
-
-  // 버전 기록 토글 — 처음 열 때만 API 조회
-  async function handleToggleHistory() {
-    if (!id) return;
-    if (!showHistory && rounds.length === 0) {
-      setIsLoadingRounds(true);
-      try {
-        const data = await listRounds(id);
-        setRounds(data);
-      } catch {
-        showToast("버전 목록을 불러오지 못했어요.");
-        return;
-      } finally {
-        setIsLoadingRounds(false);
-      }
-    }
-    setShowHistory((prev) => !prev);
-  }
-
-  // 특정 버전 복원 — 성공 시 프로젝트 재조회
-  async function handleRestore(round: number) {
-    if (!id) return;
-    const ok = window.confirm(`버전 ${round}로 복원할까요? 현재 단계 목록은 새 버전으로 대체됩니다.`);
-    if (!ok) return;
-    setIsRestoring(true);
-    try {
-      await restoreRound(id, round);
-      const updated = await getProject(id);
-      setProject(updated);
-      setShowHistory(false);
-      setRounds([]);
-    } catch {
-      showToast("복원하지 못했어요. 다시 시도해 주세요.");
-    } finally {
-      setIsRestoring(false);
-    }
-  }
-
-  // trigger 한국어 변환
-  function triggerLabel(trigger: string): string {
-    if (trigger === "initial") return "최초 생성";
-    if (trigger === "edit") return "직접 편집";
-    if (trigger === "restore") return "버전 복원";
-    return trigger;
   }
 
   async function handleDelete() {
@@ -444,8 +357,6 @@ export default function ProjectDetailPage() {
                 busySubDecompose={busySubParentId === step.id}
                 onToggle={handleToggle}
                 onSubDecompose={handleSubDecompose}
-                onEditSubSteps={handleEditSubSteps}
-                onCancelSubSteps={handleCancelSubSteps}
               />
             ))}
           </div>
@@ -473,7 +384,6 @@ export default function ProjectDetailPage() {
           </button>
         </div>
       ) : (
-        <>
         <div className="grid grid-cols-[1fr_auto_1fr] gap-2.5 items-center pt-2">
           <button
             type="button"
@@ -498,50 +408,6 @@ export default function ProjectDetailPage() {
             목록으로
           </button>
         </div>
-
-        {/* 버전 기록 토글 버튼 */}
-        <button
-          type="button"
-          onClick={() => void handleToggleHistory()}
-          disabled={isLoadingRounds || isRestoring}
-          className="w-full text-center text-xs font-bold text-mu py-1.5 hover:text-tx transition-colors cursor-pointer disabled:opacity-50"
-        >
-          {isLoadingRounds ? "불러오는 중…" : showHistory ? "▲ 버전 기록 닫기" : "🕐 버전 기록"}
-        </button>
-
-        {/* 버전 기록 패널 */}
-        {showHistory && (
-          <div className="bg-fa border border-bd2 rounded-2xl px-4 py-3 space-y-2">
-            {rounds.length <= 1 ? (
-              <p className="text-xs text-mu text-center py-2">이전 버전이 없어요.</p>
-            ) : (
-              rounds.map((r, i) => (
-                <div key={r.decompositionId} className="flex items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-tx">
-                      버전 {r.round}
-                      {i === 0 && <span className="ml-1.5 text-ac font-black">현재</span>}
-                    </p>
-                    <p className="text-[11px] text-mu">
-                      {triggerLabel(r.trigger)} · {r.stepCount}단계 · {new Date(r.createdAt).toLocaleDateString("ko-KR")}
-                    </p>
-                  </div>
-                  {i !== 0 && (
-                    <button
-                      type="button"
-                      onClick={() => void handleRestore(r.round)}
-                      disabled={isRestoring}
-                      className="shrink-0 text-xs font-black text-ac border border-ac rounded-lg px-2.5 py-1 hover:bg-ac-s transition-colors cursor-pointer disabled:opacity-50"
-                    >
-                      복원
-                    </button>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        )}
-        </>
       )}
     </div>
   );
