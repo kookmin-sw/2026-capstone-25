@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>한발짝 — AI 과업 분해 서비스</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #FFF8F1;
+      --sf: #FFFFFF;
+      --ac: #FF9478;
+      --ac-d: #FF7A58;
+      --ac-s: #FFF0E8;
+      --ac-s2: #FFE1D4;
+      --tx: #3D2F27;
+      --tx2: #6B5A4E;
+      --mu: #B5A495;
+      --bd: #F5E6D8;
+      --bd2: #FAEFE3;
+      --font-body: 'Noto Sans KR', -apple-system, sans-serif;
+      --font-title: 'Gaegu', 'Noto Sans KR', sans-serif;
+      --shadow-sm: 0 2px 6px rgba(180,110,70,.06);
+      --shadow-md: 0 6px 20px rgba(180,110,70,.09);
+      --shadow-lg: 0 14px 36px rgba(180,110,70,.12);
+      --r: 20px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font-body); background: var(--bg); color: var(--tx); line-height: 1.7; }
+
+    /* NAV */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2rem; height: 64px;
+      background: rgba(255,248,241,0.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--bd);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .logo-badge {
+      width: 34px; height: 34px;
+      display: flex; align-items: center; justify-content: center;
+      transform: rotate(-8deg);
+      transition: transform .3s cubic-bezier(.5,1.5,.5,1);
+    }
+    .logo-badge:hover { transform: rotate(5deg) scale(1.1); }
+    .logo-text { font-family: var(--font-title); font-size: 22px; font-weight: 700; color: var(--tx); }
+    .logo-text em { color: var(--ac-d); font-style: normal; }
+    .nav-links { display: flex; gap: 1.8rem; list-style: none; }
+    .nav-links a { font-size: 0.88rem; color: var(--mu); text-decoration: none; font-weight: 600; transition: color .2s; }
+    .nav-links a:hover { color: var(--ac-d); }
+
+    /* HERO */
+    .hero { max-width: 780px; margin: 0 auto; padding: 6rem 2rem 4rem; text-align: center; }
+    .badge {
+      display: inline-block; background: var(--ac-s); color: var(--ac-d);
+      font-size: 0.78rem; font-weight: 700; letter-spacing: .06em;
+      padding: 4px 14px; border-radius: 20px; margin-bottom: 1.6rem;
+      border: 1px solid var(--ac-s2);
+    }
+    .hero h1 {
+      font-family: var(--font-title);
+      font-size: clamp(2.4rem, 6vw, 3.6rem);
+      line-height: 1.2; color: var(--tx); margin-bottom: 1.2rem;
+    }
+    .hero h1 em { font-style: normal; color: var(--ac-d); }
+    .hero p { font-size: 1.05rem; color: var(--tx2); max-width: 520px; margin: 0 auto 2.4rem; }
+    .btn-group { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 28px; border-radius: 14px;
+      font-size: 0.92rem; font-weight: 700;
+      text-decoration: none; transition: all .2s; font-family: var(--font-body);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg,#FFB59C 0%,#FF8567 100%); color: #fff;
+      box-shadow: 0 8px 20px rgba(255,133,103,.35);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(255,133,103,.42); }
+    .btn-outline { background: var(--sf); color: var(--tx); border: 1.5px solid var(--bd); }
+    .btn-outline:hover { border-color: var(--ac-d); color: var(--ac-d); }
+
+    /* MOCKUP */
+    .mockup-wrap { max-width: 360px; margin: 3rem auto 0; padding: 0 2rem; }
+    .phone-frame {
+      background: var(--sf); border-radius: 36px;
+      box-shadow: var(--shadow-lg), 0 0 0 1px var(--bd);
+      overflow: hidden; border: 8px solid var(--tx);
+    }
+    .phone-header {
+      background: var(--sf); padding: 14px 18px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--bd);
+    }
+    .phone-logo { display: flex; align-items: center; gap: 8px; }
+    .phone-logo-icon { transform: rotate(-8deg); }
+    .phone-logo-text { font-family: var(--font-title); font-size: 20px; font-weight: 700; color: var(--tx); }
+    .phone-logo-text em { color: var(--ac-d); font-style: normal; }
+    .phone-pill {
+      background: var(--ac-s); color: var(--ac-d);
+      font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 20px;
+      border: 1px solid var(--ac-s2); display: flex; align-items: center; gap: 5px;
+    }
+    .phone-pill-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--ac); animation: pulse 2.4s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .phone-content { padding: 14px; display: flex; flex-direction: column; gap: 10px; text-align: left; }
+    .task-card {
+      background: var(--sf); border-radius: 16px; padding: 14px;
+      box-shadow: var(--shadow-sm); border: 1px solid var(--bd2);
+    }
+    .task-label { font-size: 10px; font-weight: 700; color: var(--mu); letter-spacing: .5px; margin-bottom: 6px; }
+    .task-title { font-size: 14px; font-weight: 700; color: var(--tx); margin-bottom: 10px; }
+    .task-steps { display: flex; flex-direction: column; gap: 6px; }
+    .task-step { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--tx2); font-weight: 500; }
+    .task-step.done-text { color: var(--mu); text-decoration: line-through; }
+    .step-dot {
+      width: 18px; height: 18px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-size: 9px; font-weight: 700;
+    }
+    .step-dot.done { background: var(--ac-d); color: #fff; }
+    .step-dot.todo { background: var(--bd); color: var(--mu); }
+    .step-dot.active { background: var(--ac-s); color: var(--ac-d); border: 1.5px solid var(--ac-d); }
+    .timer-card {
+      background: linear-gradient(135deg,#FFB59C 0%,#FF8567 100%);
+      border-radius: 16px; padding: 14px; text-align: center; color: #fff;
+      box-shadow: 0 8px 20px rgba(255,133,103,.3);
+    }
+    .timer-label { font-size: 10px; font-weight: 700; opacity: .8; margin-bottom: 4px; }
+    .timer-time { font-size: 34px; font-weight: 800; letter-spacing: -1px; }
+    .timer-sub { font-size: 10px; opacity: .7; margin-top: 2px; }
+
+    /* TASK DETAIL (condensed) */
+    .td-header { display: flex; align-items: center; gap: 8px; padding: 2px 2px 0; }
+    .td-back {
+      width: 28px; height: 28px; border-radius: 8px;
+      border: 1px solid var(--bd); background: var(--sf); color: var(--tx2);
+      display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; padding: 0;
+    }
+    .td-info { flex: 1; min-width: 0; }
+    .td-title {
+      font-size: 14px; font-weight: 800; color: var(--tx); line-height: 1.2;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .td-date { font-size: 9.5px; color: var(--mu); margin-top: 2px; }
+    .td-date strong { color: var(--ac-d); font-weight: 700; margin-left: 2px; }
+
+    .td-progress {
+      background: var(--sf); border: 1px solid var(--bd2); border-radius: 12px;
+      padding: 10px 12px; box-shadow: var(--shadow-sm);
+    }
+    .td-progress-row { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; margin-bottom: 7px; }
+    .td-progress-label { color: var(--tx2); font-weight: 700; font-size: 11px; }
+    .td-progress-right { display: flex; align-items: baseline; gap: 6px; }
+    .td-progress-percent { color: var(--mu); font-weight: 600; font-size: 10px; }
+    .td-progress-count { color: var(--tx); font-size: 14px; font-weight: 800; letter-spacing: -.2px; }
+    .td-bar { height: 5px; background: var(--ac-s); border-radius: 100px; overflow: hidden; }
+    .td-bar-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #FFB59C, #FF8567); border-radius: 100px; }
+
+    .td-section-label { font-size: 10px; font-weight: 700; color: var(--tx2); padding: 2px 2px 0; }
+
+    .td-stage {
+      background: var(--sf); border: 1px solid var(--bd2); border-radius: 12px;
+      padding: 11px; box-shadow: var(--shadow-sm);
+    }
+    .td-stage-head { display: flex; align-items: flex-start; gap: 8px; }
+    .td-stage-num {
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--ac-s); color: var(--ac-d);
+      font-size: 10px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; border: 1.5px solid var(--ac-s2); margin-top: 1px;
+    }
+    .td-stage-title { flex: 1; font-size: 11.5px; font-weight: 700; color: var(--tx); line-height: 1.4; }
+    .td-stage-check {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 1.5px solid var(--bd); flex-shrink: 0; margin-top: 1px;
+    }
+
+    .td-subbox {
+      margin-top: 9px; background: var(--ac-s);
+      border: 1px solid var(--ac-s2); border-radius: 10px; padding: 8px;
+    }
+    .td-subbox-label { font-size: 9.5px; font-weight: 700; color: var(--tx2); margin-bottom: 6px; }
+    .td-substep {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--sf); border-radius: 8px; padding: 6px 7px; margin-bottom: 4px;
+    }
+    .td-substep:last-child { margin-bottom: 0; }
+    .td-substep-num {
+      width: 14px; height: 14px; border-radius: 50%;
+      background: var(--bd2); color: var(--tx2);
+      font-size: 8.5px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .td-substep-text {
+      flex: 1; font-size: 10px; font-weight: 600; color: var(--tx);
+      min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .td-substep-start {
+      background: var(--ac-s); color: var(--ac-d);
+      border: 1px solid var(--ac-s2); border-radius: 6px;
+      padding: 2px 7px; font-size: 9px; font-weight: 700;
+      cursor: pointer; flex-shrink: 0; font-family: var(--font-body);
+    }
+    .td-substep-check { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid var(--bd); flex-shrink: 0; }
+
+    .phone-nav {
+      background: var(--sf); display: grid; grid-template-columns: repeat(5,1fr);
+      padding: 8px 4px 12px; border-top: 1px solid var(--bd);
+    }
+    .phone-nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 9px; font-weight: 600; color: var(--mu); }
+    .phone-nav-item.active { color: var(--ac-d); }
+    .phone-nav-icon { width: 20px; height: 20px; }
+
+    /* SECTION */
+    section { padding: 5rem 2rem; }
+    .section-inner { max-width: 900px; margin: 0 auto; }
+    .section-label { font-size: 0.78rem; font-weight: 700; letter-spacing: .1em; color: var(--ac-d); text-transform: uppercase; margin-bottom: 0.8rem; }
+    .section-title { font-size: 1.75rem; font-weight: 700; color: var(--tx); margin-bottom: 0.6rem; }
+    .section-sub { font-size: 1rem; color: var(--tx2); margin-bottom: 3rem; }
+
+    /* ABOUT */
+    .about { background: var(--sf); border-top: 1px solid var(--bd); border-bottom: 1px solid var(--bd); }
+    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: stretch; }
+    .about-text p { color: var(--tx2); margin-bottom: 1rem; font-size: 0.97rem; }
+    .about-hook {
+      font-size: 1.05rem; font-weight: 700; color: var(--tx);
+      margin-bottom: 1.4rem !important;
+    }
+    .about-hook em {
+      font-style: normal;
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 4px;
+    }
+    .about-visual { background: var(--ac-s); border-radius: var(--r); padding: 1.6rem 2rem; display: flex; flex-direction: column; justify-content: space-between; gap: 0.6rem; border: 1px solid var(--ac-s2); }
+    .flow-step { display: flex; align-items: center; gap: 1rem; }
+    .flow-num { width: 34px; height: 34px; border-radius: 50%; background: var(--ac-d); color: #fff; font-size: 0.82rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .flow-text { font-size: 0.9rem; font-weight: 600; color: var(--tx); }
+    .flow-arrow { color: var(--ac); padding-left: 47px; }
+
+    /* SERVICE FLOW (5-column) */
+    .flow-board-wrap { max-width: 1180px; margin: 0 auto; }
+    .flow-board { padding: 0; }
+    .flow-cols { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; align-items: stretch; }
+    .flow-col { display: flex; flex-direction: column; min-width: 0; }
+    .flow-col-head { font-size: 0.95rem; font-weight: 700; color: var(--tx); margin-bottom: 0.55rem; padding-left: 0.15rem; }
+    .flow-col-head em { font-style: normal; color: var(--ac-d); margin-right: 4px; }
+    .flow-col-body {
+      background: var(--sf); border: 1px solid var(--ac-s2);
+      border-radius: 18px; padding: 0.95rem 0.85rem;
+      display: flex; flex-direction: column; gap: 0.5rem;
+      flex: 1;
+    }
+    .flow-col:first-child .flow-col-body > .flow-card {
+      flex: 1; display: flex; flex-direction: column; justify-content: center;
+    }
+    .flow-col:first-child .flow-col-body > .flow-card:not(.dashed) { flex: 1.8; }
+    .flow-col-sub-title { font-size: 0.78rem; font-weight: 700; color: var(--tx); margin-top: 0.6rem; }
+
+    .flow-card { background: var(--sf); border: 1px solid var(--ac-s2); border-radius: 12px; padding: 0.65rem 0.75rem; }
+    .flow-card.dashed { border-style: dashed; }
+    .flow-card-title {
+      font-weight: 700; color: var(--tx); font-size: 0.76rem; line-height: 1.3;
+      display: flex; align-items: center; gap: 5px; margin-bottom: 0.2rem;
+    }
+    .flow-card-sub { color: var(--tx2); font-size: 0.68rem; line-height: 1.45; }
+    .flow-card-tag {
+      background: var(--ac-s); color: var(--ac-d); border: 1px solid var(--ac-s2);
+      border-radius: 6px; padding: 3px 7px; font-size: 0.6rem; font-weight: 700;
+      align-self: flex-start;
+    }
+    .flow-mini-list {
+      list-style: none; display: flex; flex-direction: column; gap: 0.2rem;
+      font-size: 0.68rem; color: var(--tx2); margin-top: 0.3rem;
+    }
+    .flow-mini-list li::before { content: "· "; color: var(--ac-d); font-weight: 700; }
+    .flow-step-num {
+      display: inline-flex; width: 15px; height: 15px; border-radius: 50%;
+      background: var(--ac-s); color: var(--ac-d); font-size: 0.62rem; font-weight: 700;
+      align-items: center; justify-content: center; border: 1px solid var(--ac-s2);
+      flex-shrink: 0;
+    }
+    .flow-arrow-d { text-align: center; color: var(--ac); font-size: 0.85rem; line-height: 1; margin: 0.1rem 0; }
+    .flow-plus { text-align: center; color: var(--mu); font-size: 0.72rem; margin: 0.15rem 0; font-weight: 600; }
+    .flow-more { text-align: center; color: var(--mu); font-size: 1.3rem; line-height: 1; letter-spacing: 2px; padding: 0.4rem 0 0.1rem; font-weight: 700; }
+    .flow-pipe {
+      background: var(--sf); border: 1px solid var(--ac-s2); border-radius: 10px;
+      padding: 0.45rem 0.55rem; font-size: 0.7rem; color: var(--tx);
+      font-weight: 600; text-align: center;
+    }
+    .flow-sub-box {
+      background: var(--ac-s); border: 1px solid var(--ac-s2);
+      border-radius: 8px; padding: 0.5rem; margin-top: 0.45rem;
+    }
+    .flow-sub-box-head { font-size: 0.62rem; font-weight: 700; color: var(--tx2); margin-bottom: 0.3rem; }
+    .flow-sub-list { list-style: none; counter-reset: subitem; display: flex; flex-direction: column; gap: 0.18rem; }
+    .flow-sub-list li {
+      font-size: 0.62rem; color: var(--tx); font-weight: 600; counter-increment: subitem;
+      display: flex; align-items: center; gap: 5px; background: var(--sf);
+      border-radius: 6px; padding: 3px 5px;
+    }
+    .flow-sub-list li::before {
+      content: counter(subitem); width: 12px; height: 12px; border-radius: 50%;
+      background: var(--bd2); color: var(--tx2); font-size: 0.52rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .flow-chips { display: flex; gap: 0.3rem; flex-wrap: wrap; margin-top: 0.45rem; }
+    .flow-chips span {
+      background: var(--ac-s); color: var(--ac-d); border: 1px solid var(--ac-s2);
+      border-radius: 12px; padding: 2px 7px; font-size: 0.6rem; font-weight: 700;
+    }
+    @media (max-width: 900px) {
+      .flow-cols { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .flow-cols { grid-template-columns: 1fr; }
+    }
+
+    /* FEATURES */
+    #features { background: var(--sf); border-top: 1px solid var(--bd); border-bottom: 1px solid var(--bd); }
+    .ux-flow {
+      display: flex; align-items: flex-start;
+      justify-content: space-between; gap: 0.5rem;
+      margin-bottom: 3.2rem; padding: 1rem 0.5rem 0;
+    }
+    .ux-step { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+    .ux-circle {
+      position: relative;
+      width: 64px; height: 64px; border-radius: 50%;
+      background: var(--sf); border: 2px solid var(--ac);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.7rem; margin-bottom: 0.7rem;
+    }
+    .ux-num {
+      position: absolute; top: -4px; right: -4px;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--tx); color: #fff;
+      font-size: 0.72rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .ux-label { font-size: 0.92rem; font-weight: 700; color: var(--tx); }
+    .ux-line { flex: 1; height: 2px; background: var(--ac); margin-top: 31px; }
+    @media (max-width: 720px) {
+      .ux-flow { flex-wrap: wrap; justify-content: center; gap: 1.2rem 1rem; }
+      .ux-line { display: none; }
+    }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.4rem; }
+    .card { background: var(--sf); border: 1px solid var(--bd); border-radius: 16px; padding: 1.8rem; transition: transform .2s, box-shadow .2s; }
+    .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+    .card-icon { font-size: 1.6rem; margin-bottom: 1rem; }
+    .card h3 { font-size: 1rem; font-weight: 700; color: var(--tx); margin-bottom: .5rem; }
+    .card p { font-size: 0.88rem; color: var(--tx2); }
+
+    /* DEMO */
+    .video-wrap {
+      position: relative; max-width: 900px; margin: 0 auto;
+      padding-top: 56.25%; /* 16:9 */
+      border-radius: 16px; overflow: hidden;
+      box-shadow: var(--shadow-lg); border: 1px solid var(--bd);
+      background: var(--tx);
+    }
+    .video-wrap iframe {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%; border: 0;
+    }
+
+    /* TECH */
+    .tech { background: var(--sf); border-top: 1px solid var(--bd); border-bottom: 1px solid var(--bd); }
+    .tech-groups { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; }
+    .tech-group-title {
+      font-size: 1.05rem; font-weight: 700; color: var(--tx);
+      margin-bottom: 0.5rem; padding-left: 0.1rem;
+    }
+    .tech-group-title em { font-style: normal; color: var(--ac-d); margin-right: 5px; font-weight: 700; }
+    .tech-list {
+      background: var(--bg); border: 1px solid var(--bd);
+      border-radius: 12px; padding: 0.2rem 1.1rem;
+    }
+    .tech-row {
+      display: grid; grid-template-columns: 110px 1fr;
+      gap: 1rem; padding: 0.62rem 0;
+      border-bottom: 1px dashed var(--bd);
+      font-size: 0.92rem; align-items: baseline;
+    }
+    .tech-row:last-child { border-bottom: none; }
+    .tech-key { color: var(--mu); font-weight: 500; font-size: 0.85rem; }
+    .tech-val { color: var(--tx); font-weight: 600; }
+    @media (max-width: 700px) {
+      .tech-groups { grid-template-columns: 1fr; }
+    }
+
+    /* TEAM */
+    .team-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.4rem; max-width: 720px; margin: 0 auto; }
+    .team-card { background: var(--sf); border: 1px solid var(--bd); border-radius: 16px; padding: 2rem 1.6rem; text-align: center; min-width: 0; }
+    .avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--ac-s); margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; border: 2px solid var(--ac-s2); }
+    .team-card h3 { font-weight: 700; font-size: 1rem; margin-bottom: .3rem; }
+    .team-card p { font-size: 0.85rem; color: var(--tx2); }
+    .team-card .role { display: inline-block; background: var(--ac-s); color: var(--ac-d); font-size: 0.75rem; font-weight: 700; padding: 2px 10px; border-radius: 20px; margin-top: .5rem; }
+
+    footer { border-top: 1px solid var(--bd); text-align: center; padding: 2rem; font-size: 0.83rem; color: var(--mu); }
+
+    @media (max-width: 640px) {
+      .about-grid { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="logo-badge">
+      <svg width="28" height="32" viewBox="0 0 28 36" fill="none">
+        <path d="M8.5 32c-2.5 1-4.5-0.5-4.8-3-.4-3 1-6.5 2.2-9.5.8-2 1.5-3.5 2.5-5 1.2-1.8 2.5-3 4-3.8 1.8-1 3.5-.8 4.8.2 1.5 1.2 2 3.2 1.8 5.8-.2 2.5-1 5.2-2.2 8-1 2.3-2.2 4.5-3.8 5.8-1.2 1-2.8 1.8-4.5 1.5z" stroke="#FF7A58" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="#FFF0E8"/>
+        <ellipse cx="9" cy="9.5" rx="3" ry="3.5" stroke="#FF7A58" stroke-width="1.8" fill="#FFF0E8" transform="rotate(-10 9 9.5)"/>
+        <ellipse cx="14.5" cy="7.5" rx="2.3" ry="3" stroke="#FF7A58" stroke-width="1.6" fill="#FFF0E8" transform="rotate(5 14.5 7.5)"/>
+        <ellipse cx="19" cy="9" rx="2" ry="2.7" stroke="#FF7A58" stroke-width="1.6" fill="#FFF0E8" transform="rotate(12 19 9)"/>
+        <ellipse cx="22.5" cy="12" rx="1.7" ry="2.3" stroke="#FF7A58" stroke-width="1.5" fill="#FFF0E8" transform="rotate(20 22.5 12)"/>
+        <ellipse cx="24.5" cy="15.5" rx="1.4" ry="2" stroke="#FF7A58" stroke-width="1.5" fill="#FFF0E8" transform="rotate(30 24.5 15.5)"/>
+      </svg>
+    </div>
+    <div class="logo-text"><em>한</em>발짝</div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#about">소개</a></li>
+    <li><a href="#service-flow">서비스 흐름</a></li>
+    <li><a href="#features">기능</a></li>
+    <li><a href="#tech">기술 스택</a></li>
+    <li><a href="#team">팀 소개</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="badge">CAPSTONE DESIGN 2026 · 25조</div>
+  <h1>막막한 할 일,<br><em>한 발짝</em>부터 시작해요</h1>
+  <p>AI가 복잡한 과업을 실행 가능한 단계로 분해하고,<br>프로젝트별 · 일정별 관리 및 타이머 집중 세션으로 완주까지 함께합니다.</p>
+  <div class="btn-group">
+    <a href="https://github.com/kookmin-sw/2026-capstone-25" class="btn btn-primary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61-.54-1.38-1.33-1.75-1.33-1.75-1.09-.74.08-.73.08-.73 1.2.08 1.83 1.24 1.83 1.24 1.07 1.83 2.81 1.3 3.49 1 .11-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 3-.4c1.02 0 2.04.14 3 .4 2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.48 5.92.43.37.82 1.1.82 2.22v3.29c0 .32.21.7.82.58C20.56 21.8 24 17.31 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      GitHub 보기
+    </a>
+    <a href="https://hanbaljjak-frontend.vercel.app/" class="btn btn-primary" target="_blank" rel="noopener noreferrer">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7"/><path d="M21 3l-9 9"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>
+      사이트 바로가기
+    </a>
+    <a href="#about" class="btn btn-outline">프로젝트 소개 ↓</a>
+  </div>
+
+  <!-- 앱 목업 -->
+  <div class="mockup-wrap">
+    <div class="phone-frame">
+      <div class="phone-header">
+        <div class="phone-logo">
+          <div class="phone-logo-icon">
+            <svg width="26" height="30" viewBox="0 0 28 36" fill="none">
+              <path d="M8.5 32c-2.5 1-4.5-0.5-4.8-3-.4-3 1-6.5 2.2-9.5.8-2 1.5-3.5 2.5-5 1.2-1.8 2.5-3 4-3.8 1.8-1 3.5-.8 4.8.2 1.5 1.2 2 3.2 1.8 5.8-.2 2.5-1 5.2-2.2 8-1 2.3-2.2 4.5-3.8 5.8-1.2 1-2.8 1.8-4.5 1.5z" stroke="#FF7A58" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="#FFF0E8"/>
+              <ellipse cx="9" cy="9.5" rx="3" ry="3.5" stroke="#FF7A58" stroke-width="1.8" fill="#FFF0E8" transform="rotate(-10 9 9.5)"/>
+              <ellipse cx="14.5" cy="7.5" rx="2.3" ry="3" stroke="#FF7A58" stroke-width="1.6" fill="#FFF0E8" transform="rotate(5 14.5 7.5)"/>
+              <ellipse cx="19" cy="9" rx="2" ry="2.7" stroke="#FF7A58" stroke-width="1.6" fill="#FFF0E8" transform="rotate(12 19 9)"/>
+              <ellipse cx="22.5" cy="12" rx="1.7" ry="2.3" stroke="#FF7A58" stroke-width="1.5" fill="#FFF0E8" transform="rotate(20 22.5 12)"/>
+              <ellipse cx="24.5" cy="15.5" rx="1.4" ry="2" stroke="#FF7A58" stroke-width="1.5" fill="#FFF0E8" transform="rotate(30 24.5 15.5)"/>
+            </svg>
+          </div>
+          <div class="phone-logo-text"><em>한</em>발짝</div>
+        </div>
+        <div class="phone-pill">
+          <div class="phone-pill-dot"></div>
+          <span>오늘 0분</span>
+        </div>
+      </div>
+      <div class="phone-content">
+        <!-- 과업 헤더 -->
+        <div class="td-header">
+          <button class="td-back" aria-label="뒤로">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="td-info">
+            <div class="td-title">프론트엔드 포트폴리오</div>
+            <div class="td-date">2026-05-31 <strong>D-10</strong></div>
+          </div>
+        </div>
+
+        <!-- 진행률 -->
+        <div class="td-progress">
+          <div class="td-progress-row">
+            <span class="td-progress-label">진행률</span>
+            <span class="td-progress-right">
+              <span class="td-progress-percent">0%</span>
+              <strong class="td-progress-count">0/7</strong>
+            </span>
+          </div>
+          <div class="td-bar"><div class="td-bar-fill"></div></div>
+        </div>
+
+        <!-- 단계별 진행 -->
+        <div class="td-stage">
+          <div class="td-stage-head">
+            <div class="td-stage-num">1</div>
+            <div class="td-stage-title">포트폴리오 구성 계획</div>
+            <div class="td-stage-check"></div>
+          </div>
+          <div class="td-subbox">
+            <div class="td-subbox-label">📁 하위 단계</div>
+            <div class="td-substep">
+              <div class="td-substep-num">1</div>
+              <div class="td-substep-text">타겟 기업·직무 분석</div>
+              <button class="td-substep-start">시작</button>
+              <div class="td-substep-check"></div>
+            </div>
+            <div class="td-substep">
+              <div class="td-substep-num">2</div>
+              <div class="td-substep-text">포트폴리오 콘셉트 정의</div>
+              <button class="td-substep-start">시작</button>
+              <div class="td-substep-check"></div>
+            </div>
+            <div class="td-substep">
+              <div class="td-substep-num">3</div>
+              <div class="td-substep-text">프로젝트 개수·주제 선정</div>
+              <button class="td-substep-start">시작</button>
+              <div class="td-substep-check"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-nav">
+        <div class="phone-nav-item">
+          <svg class="phone-nav-icon" viewBox="0 0 24 24" fill="none"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V10.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 21v-7h6v7" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+          홈
+        </div>
+        <div class="phone-nav-item">
+          <svg class="phone-nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2.5" stroke="currentColor" stroke-width="1.7"/><path d="M8 3v4M16 3v4M3 10h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          일정
+        </div>
+        <div class="phone-nav-item active">
+          <svg class="phone-nav-icon" viewBox="0 0 24 24" fill="none"><rect x="5" y="4" width="14" height="18" rx="2" stroke="currentColor" stroke-width="1.7"/><rect x="9" y="2" width="6" height="4" rx="1" stroke="currentColor" stroke-width="1.7" fill="#FFF8F1"/><path d="M8 11h8M8 15h8M8 19h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          전체
+        </div>
+        <div class="phone-nav-item">
+          <svg class="phone-nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z" stroke="currentColor" stroke-width="1.7"/><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          리포트
+        </div>
+        <div class="phone-nav-item">
+          <svg class="phone-nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="9" r="3.8" stroke="currentColor" stroke-width="1.7"/><path d="M4 20.5c0-4.2 3.6-7.5 8-7.5s8 3.3 8 7.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          나
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section class="about" id="about">
+  <div class="section-inner">
+    <div class="about-grid">
+      <div class="about-text">
+        <div class="section-label">About</div>
+        <h2 class="section-title">왜 한발짝인가요?</h2>
+        <p class="about-hook">할 일은 알고 있지만 <em>"무엇부터 할지 막막하다"</em></p>
+        <p>큰 과업 앞에서 '어디서부터 시작해야 하지?'라는 막막함을 누구나 경험합니다. 특히 할 일은 많은데 시간은 없는 경우 막막함은 배가 됩니다.</p>
+        <p>할 일 앱은 과업을 덩어리째 남겨두거나 사용자가 쪼갠 과업을 관리할 뿐이죠.</p>
+        <p>한발짝은 그 앞 단계를 해결합니다. Claude API로 과업을 실행 가능한 단계로 자동 분해하고, 실행 및 관리까지 연결합니다.</p>
+      </div>
+      <div class="about-visual">
+        <div class="flow-step"><div class="flow-num">1</div><div class="flow-text">할 일 입력</div></div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step"><div class="flow-num">2</div><div class="flow-text">AI가 자동 분해</div></div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step"><div class="flow-num">3</div><div class="flow-text">집중 타이머로 실행</div></div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step"><div class="flow-num">4</div><div class="flow-text">진행 관리 · 일정 배치</div></div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step"><div class="flow-num">5</div><div class="flow-text">주간 리포트</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICE FLOW -->
+<section class="service-flow" id="service-flow">
+  <div class="section-inner">
+    <div class="section-label">Service Flow</div>
+    <h2 class="section-title">서비스 흐름</h2>
+  </div>
+  <div class="flow-board-wrap">
+    <div class="flow-board">
+      <div class="flow-cols">
+
+        <!-- 1. 입력 -->
+        <div class="flow-col">
+          <div class="flow-col-head"><em>1.</em>입력</div>
+          <div class="flow-col-body">
+            <div class="flow-card">
+              <div class="flow-card-title">사용자 텍스트</div>
+              <div class="flow-card-sub">직접 입력 또는 템플릿 참고</div>
+            </div>
+            <div class="flow-plus">+ 선택</div>
+            <div class="flow-card dashed">
+              <div class="flow-card-title">📎 파일</div>
+              <div class="flow-card-sub">.pdf · .docx · 이미지</div>
+            </div>
+            <div class="flow-card dashed">
+              <div class="flow-card-title">📁 카테고리별 템플릿</div>
+              <div class="flow-card-sub">학업 · 취업 · 여가 등</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. 파일 처리 -->
+        <div class="flow-col">
+          <div class="flow-col-head"><em>2.</em>파일 처리</div>
+          <div class="flow-col-body">
+            <div class="flow-card">
+              <div class="flow-card-title"><span class="flow-step-num">1</span>형식 분류</div>
+              <ul class="flow-mini-list">
+                <li>txt · md · docx</li>
+                <li>pdf</li>
+                <li>png · jpg · webp</li>
+              </ul>
+            </div>
+            <div class="flow-arrow-d">↓</div>
+            <div class="flow-card">
+              <div class="flow-card-title"><span class="flow-step-num">2</span>형식별 처리</div>
+              <ul class="flow-mini-list">
+                <li>텍스트 변환</li>
+                <li>원본 PDF 인코딩</li>
+                <li>이미지 인코딩</li>
+              </ul>
+            </div>
+            <div class="flow-arrow-d">↓</div>
+            <div class="flow-card">
+              <div class="flow-card-title"><span class="flow-step-num">3</span>AI 전달 준비</div>
+              <div class="flow-card-sub">text · document · image 블록</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. AI 분해 -->
+        <div class="flow-col">
+          <div class="flow-col-head"><em>3.</em>AI 분해</div>
+          <div class="flow-col-body">
+            <div class="flow-col-sub-title" style="margin-top:0;">분해 요청 처리 흐름</div>
+            <div class="flow-pipe">📨 입력 수신</div>
+            <div class="flow-arrow-d">↓</div>
+            <div class="flow-pipe">⚙️ 프롬프트 조합</div>
+            <div class="flow-arrow-d">↓</div>
+            <div class="flow-pipe">🤖 Claude API 호출</div>
+            <div class="flow-arrow-d">↓</div>
+            <div class="flow-pipe">{ } JSON 응답 파싱</div>
+            <div class="flow-arrow-d">↓</div>
+            <div class="flow-pipe">💾 (확정 시) DB 저장</div>
+          </div>
+        </div>
+
+        <!-- 4. 결과 화면 -->
+        <div class="flow-col">
+          <div class="flow-col-head"><em>4.</em>결과 화면</div>
+          <div class="flow-col-body">
+            <div class="flow-card-tag">+ AI가 8개 단계로 정리했어요</div>
+            <div class="flow-col-sub-title" style="margin-top:0.3rem;">캡스톤 프로젝트</div>
+            <div class="flow-card">
+              <div class="flow-card-title"><span class="flow-step-num">1</span>주제 선정 및 문제 정의</div>
+              <div class="flow-card-sub">팀 회의로 아이디어 확정,<br>해결할 문제 명확화.</div>
+            </div>
+            <div class="flow-card">
+              <div class="flow-card-title"><span class="flow-step-num">2</span>요구사항 분석 및 설계</div>
+              <div class="flow-card-sub">핵심 기능과 사용자 시나리오 정리.</div>
+            </div>
+            <div class="flow-card">
+              <div class="flow-card-title"><span class="flow-step-num">3</span>기술 스택 선정</div>
+              <div class="flow-card-sub">프론트·백·DB 등 사용할 기술 스택 구성 결정.</div>
+            </div>
+            <div class="flow-more">⋮</div>
+          </div>
+        </div>
+
+        <!-- 5. 피드백 -->
+        <div class="flow-col">
+          <div class="flow-col-head"><em>5.</em>피드백</div>
+          <div class="flow-col-body">
+            <div class="flow-col-sub-title" style="margin-top:0;">특정 단계 — 2차 분해</div>
+            <div class="flow-card">
+              <div class="flow-card-title"><span class="flow-step-num">1</span>포트폴리오 구성 계획</div>
+              <div class="flow-sub-box">
+                <div class="flow-sub-box-head">📁 하위 단계 4개</div>
+                <ol class="flow-sub-list">
+                  <li>타겟 기업·직무 분석</li>
+                  <li>포트폴리오 콘셉트 정의</li>
+                  <li>프로젝트 주제 선정</li>
+                  <li>전시 형식 확정</li>
+                </ol>
+              </div>
+            </div>
+            <div class="flow-col-sub-title">자연어 피드백 — 재분해</div>
+            <div class="flow-card">
+              <div class="flow-card-sub">🗨 이렇게 다시 나눠볼까요?</div>
+              <div class="flow-chips">
+                <span>더 잘게</span>
+                <span>더 크게</span>
+                <span>AI에게 직접 얘기</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="section-inner">
+    <div class="section-label">Features</div>
+    <h2 class="section-title">주요 기능</h2>
+    <p class="section-sub">할 일 입력부터 회고까지, 6단계 경험</p>
+
+    <div class="ux-flow">
+      <div class="ux-step">
+        <div class="ux-circle">📝<div class="ux-num">1</div></div>
+        <div class="ux-label">입력</div>
+      </div>
+      <div class="ux-line"></div>
+      <div class="ux-step">
+        <div class="ux-circle">✂️<div class="ux-num">2</div></div>
+        <div class="ux-label">분해</div>
+      </div>
+      <div class="ux-line"></div>
+      <div class="ux-step">
+        <div class="ux-circle">▶️<div class="ux-num">3</div></div>
+        <div class="ux-label">실행</div>
+      </div>
+      <div class="ux-line"></div>
+      <div class="ux-step">
+        <div class="ux-circle">📁<div class="ux-num">4</div></div>
+        <div class="ux-label">관리</div>
+      </div>
+      <div class="ux-line"></div>
+      <div class="ux-step">
+        <div class="ux-circle">📅<div class="ux-num">5</div></div>
+        <div class="ux-label">일정</div>
+      </div>
+      <div class="ux-line"></div>
+      <div class="ux-step">
+        <div class="ux-circle">📊<div class="ux-num">6</div></div>
+        <div class="ux-label">리포트</div>
+      </div>
+    </div>
+
+    <div class="features-grid">
+      <div class="card"><div class="card-icon">📝</div><h3>할 일 입력</h3><p>텍스트로 직접 적거나 할 일과 관련된 템플릿을 고를 수 있어요.<br>.pdf/.docx/.txt/.md/이미지 첨부까지 함께 보낼 수 있어요.</p></div>
+      <div class="card"><div class="card-icon">✂️</div><h3>AI 할 일 분해</h3><p>Claude API(Haiku 4.5)가 의미 경계에 따라 단계를 자동 분해.<br>더 잘게 · 더 크게 · 자연어 피드백으로 재분해, 단계별 2차 세분화까지 가능해요.</p></div>
+      <div class="card"><div class="card-icon">▶️</div><h3>집중 타이머</h3><p>단계 선택 후 타이머 집중 세션을 시작하여 원하는 시간 만큼 집중할 수 있어요.</p></div>
+      <div class="card"><div class="card-icon">📁</div><h3>진행 관리</h3><p>1차·2차 단계들 시각화와 단계별 시작 또는 완료 표시가 가능하고, 진행률까지 한눈에 볼 수 있어요.</p></div>
+      <div class="card"><div class="card-icon">📅</div><h3>캘린더</h3><p>주간 · 월간 캘린더에 날짜별 단계를 배치하여 일정을 관리합니다. 단일 작업 추가도 가능해요.</p></div>
+      <div class="card"><div class="card-icon">📊</div><h3>주간 리포트</h3><p>이번 주 회고, 작업 스타일 패턴, 4주 추이, 집중 기록, 다음 주 전략을 AI가 자동 분석해요.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section id="demo">
+  <div class="section-inner">
+    <div class="section-label">Demo video</div>
+    <h2 class="section-title">시연 영상</h2>
+    <div class="video-wrap">
+      <iframe
+        src="https://www.youtube.com/embed/EO2LgYwzoeQ"
+        title="한발짝 시연 영상"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen
+        loading="lazy"
+        referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    </div>
+  </div>
+</section>
+
+<!-- TECH -->
+<section class="tech" id="tech">
+  <div class="section-inner">
+    <div class="section-label">Tech Stack</div>
+    <h2 class="section-title">기술 스택</h2>
+    <div class="tech-groups">
+      <div class="tech-group">
+        <div class="tech-group-title"><em>(1)</em>Frontend</div>
+        <div class="tech-list">
+          <div class="tech-row"><span class="tech-key">프레임워크</span><span class="tech-val">React</span></div>
+          <div class="tech-row"><span class="tech-key">빌드 도구</span><span class="tech-val">Vite</span></div>
+          <div class="tech-row"><span class="tech-key">언어</span><span class="tech-val">TypeScript</span></div>
+          <div class="tech-row"><span class="tech-key">스타일링</span><span class="tech-val">Tailwind CSS</span></div>
+        </div>
+      </div>
+
+      <div class="tech-group">
+        <div class="tech-group-title"><em>(2)</em>Backend</div>
+        <div class="tech-list">
+          <div class="tech-row"><span class="tech-key">런타임</span><span class="tech-val">Node.js</span></div>
+          <div class="tech-row"><span class="tech-key">프레임워크</span><span class="tech-val">Express</span></div>
+          <div class="tech-row"><span class="tech-key">언어</span><span class="tech-val">TypeScript</span></div>
+        </div>
+      </div>
+
+      <div class="tech-group">
+        <div class="tech-group-title"><em>(3)</em>외부 서비스 · 인프라</div>
+        <div class="tech-list">
+          <div class="tech-row"><span class="tech-key">AI 모델</span><span class="tech-val">Anthropic Claude (Haiku 4.5)</span></div>
+          <div class="tech-row"><span class="tech-key">인증</span><span class="tech-val">Supabase Auth</span></div>
+          <div class="tech-row"><span class="tech-key">데이터베이스</span><span class="tech-val">Supabase PostgreSQL</span></div>
+          <div class="tech-row"><span class="tech-key">파일 저장소</span><span class="tech-val">Supabase Storage</span></div>
+        </div>
+      </div>
+
+      <div class="tech-group">
+        <div class="tech-group-title"><em>(4)</em>배포</div>
+        <div class="tech-list">
+          <div class="tech-row"><span class="tech-key">Frontend</span><span class="tech-val">Vercel</span></div>
+          <div class="tech-row"><span class="tech-key">Backend</span><span class="tech-val">Railway</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section id="team">
+  <div class="section-inner" style="text-align:center;">
+    <div class="section-label">Team</div>
+    <h2 class="section-title">만든 사람들</h2>
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="avatar">🐾</div>
+        <h3>이재은</h3>
+        <p>- AI 분해: 프롬프트 설계, Prompt Cache</p>
+        <p>- 입력: 템플릿, 파일 업로드</p>
+        <p>- 결과: 단계 및 가이드라인, AI 추론 카드</p>
+        <p>- 피드백: 재분해, 단계별 2차 분해</p>
+        <span class="role">Full Stack</span>
+      </div>
+      <div class="team-card">
+        <div class="avatar">🐾</div>
+        <h3>이지희</h3>
+        <p>- 프로젝트 관리, 단계·진행률 체크</p>
+        <p>- 타이머 · 집중 시간 누적</p>
+        <p>- 캘린더(주/월), 일정 관리</p>
+        <p>- 주간 리포트, AI 코멘트</p>
+        <span class="role">Full Stack</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>© 2026 한발짝 · CAPSTONE DESIGN 25조</p>
+</footer>
+
+</body>
+</html>
