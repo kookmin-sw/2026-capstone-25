@@ -54,6 +54,7 @@ type StepDetailRow = StepRow & {
   parent_step_id: string | null;
   description: string | null;
   boundary_signal: string | null;
+  time_spent: number | null;
 };
 
 router.use(authMiddleware);
@@ -385,7 +386,7 @@ router.patch("/:id/steps", async (req, res) => {
   if (latestDecompId) {
     const { data: existingSteps } = await supabase
       .from("steps")
-      .select("id, decomposition_id, parent_step_id, order_idx, title, done, description, boundary_signal")
+      .select("id, decomposition_id, parent_step_id, order_idx, title, done, description, boundary_signal, time_spent")
       .eq("decomposition_id", latestDecompId);
     for (const s of (existingSteps ?? []) as StepDetailRow[]) {
       existingStepMap.set(s.id, s);
@@ -412,6 +413,7 @@ router.patch("/:id/steps", async (req, res) => {
       description: existing?.description ?? null,
       boundary_signal: existing?.boundary_signal ?? null,
       done: existing?.done ?? false,
+      time_spent: existing?.time_spent ?? 0,
     };
   });
 
@@ -432,6 +434,7 @@ router.patch("/:id/steps", async (req, res) => {
     description: string | null;
     boundary_signal: string | null;
     done: boolean;
+    time_spent: number;
   }> = [];
   let nextChildOrderIdx = parsed.data.steps.length;
   parsed.data.steps.forEach((parent, parentIdx) => {
@@ -447,6 +450,7 @@ router.patch("/:id/steps", async (req, res) => {
         description: existingChild?.description ?? null,
         boundary_signal: existingChild?.boundary_signal ?? null,
         done: existingChild?.done ?? false,
+        time_spent: existingChild?.time_spent ?? 0,
       });
     }
   });
