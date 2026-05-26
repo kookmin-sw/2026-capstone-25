@@ -6,12 +6,14 @@ export default function PatternCards({ patterns, loading }: Props) {
   return (
     <div className="bg-sf border border-bd2 rounded-[20px] shadow-[0_2px_6px_rgba(180,110,70,0.06)] p-[18px]">
       <p className="text-[13px] font-black text-tx mb-3.5">발견된 패턴</p>
-      {loading || !patterns ? (
+      {loading ? (
         <div className="flex flex-col gap-3">
           {[1, 2].map((i) => (
             <div key={i} className="h-[62px] rounded-[14px] bg-fa animate-pulse" />
           ))}
         </div>
+      ) : !patterns ? (
+        <p className="text-xs text-mu">분석 데이터가 부족해요. 더 사용하면 나타나요.</p>
       ) : (
         <div className="flex flex-col gap-3">
           {patterns.map((p, i) => (

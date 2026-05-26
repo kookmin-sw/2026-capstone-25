@@ -8,8 +8,10 @@ export default function UserTypeCard({ ai, loading }: Props) {
   return (
     <div className="bg-sf border border-bd2 rounded-[20px] shadow-[0_2px_6px_rgba(180,110,70,0.06)] px-[18px] py-4">
       <p className="text-[11px] font-bold text-mu tracking-[0.5px] mb-3">나의 작업 스타일</p>
-      {loading || !ut ? (
+      {loading ? (
         <div className="h-12 rounded-xl bg-fa animate-pulse" />
+      ) : !ut ? (
+        <p className="text-xs text-mu">분석 데이터가 부족해요. 더 사용하면 나타나요.</p>
       ) : (
         <div className="flex items-start gap-3">
           <div

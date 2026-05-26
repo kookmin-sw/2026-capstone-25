@@ -220,6 +220,13 @@ router.post("/ai-summary", async (req, res) => {
     const message = await anthropic.messages.create({
       model: env.ANTHROPIC_MODEL,
       max_tokens: 1024,
+      system: [
+        {
+          type: "text",
+          text: "You are a productivity insight assistant. Always respond with valid JSON only — no explanation, no markdown, no code fences. Output must be a single JSON object.",
+          cache_control: { type: "ephemeral" },
+        },
+      ],
       messages: [{ role: "user", content: userPrompt }],
     });
 
