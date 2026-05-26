@@ -55,6 +55,10 @@ type StepDetailRow = StepRow & {
   description: string | null;
   boundary_signal: string | null;
   time_spent: number | null;
+  estimated_minutes: number | null;
+  guide: string | null;
+  first_move: string | null;
+  unblocker: string | null;
 };
 
 router.use(authMiddleware);
@@ -386,7 +390,7 @@ router.patch("/:id/steps", async (req, res) => {
   if (latestDecompId) {
     const { data: existingSteps } = await supabase
       .from("steps")
-      .select("id, decomposition_id, parent_step_id, order_idx, title, done, description, boundary_signal, time_spent")
+      .select("id, decomposition_id, parent_step_id, order_idx, title, done, description, boundary_signal, time_spent, estimated_minutes, guide, first_move, unblocker")
       .eq("decomposition_id", latestDecompId);
     for (const s of (existingSteps ?? []) as StepDetailRow[]) {
       existingStepMap.set(s.id, s);
@@ -414,6 +418,10 @@ router.patch("/:id/steps", async (req, res) => {
       boundary_signal: existing?.boundary_signal ?? null,
       done: existing?.done ?? false,
       time_spent: existing?.time_spent ?? 0,
+      estimated_minutes: existing?.estimated_minutes ?? null,
+      guide: existing?.guide ?? null,
+      first_move: existing?.first_move ?? null,
+      unblocker: existing?.unblocker ?? null,
     };
   });
 
@@ -435,6 +443,10 @@ router.patch("/:id/steps", async (req, res) => {
     boundary_signal: string | null;
     done: boolean;
     time_spent: number;
+    estimated_minutes: number | null;
+    guide: string | null;
+    first_move: string | null;
+    unblocker: string | null;
   }> = [];
   let nextChildOrderIdx = parsed.data.steps.length;
   parsed.data.steps.forEach((parent, parentIdx) => {
@@ -451,6 +463,10 @@ router.patch("/:id/steps", async (req, res) => {
         boundary_signal: existingChild?.boundary_signal ?? null,
         done: existingChild?.done ?? false,
         time_spent: existingChild?.time_spent ?? 0,
+        estimated_minutes: existingChild?.estimated_minutes ?? null,
+        guide: existingChild?.guide ?? null,
+        first_move: existingChild?.first_move ?? null,
+        unblocker: existingChild?.unblocker ?? null,
       });
     }
   });
