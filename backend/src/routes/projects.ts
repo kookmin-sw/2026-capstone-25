@@ -455,12 +455,43 @@ router.patch("/:id/steps", async (req, res) => {
     }
   });
 
+  // 자식 단계 insert + old→new id 매핑
+  const childIdMap = new Map<string, string>(); // old child id -> new child id
   if (childRows.length > 0) {
-    const { error: childError } = await supabase.from("steps").insert(childRows);
-    if (childError) {
-      res.status(500).json({ error: childError.message });
+    const { data: insertedChildren, error: childError } = await supabase
+      .from("steps")
+      .insert(childRows)
+      .select("id");
+    if (childError || !insertedChildren) {
+      res.status(500).json({ error: childError?.message ?? "Failed to insert child steps" });
       return;
     }
+    let childIdx = 0;
+    parsed.data.steps.forEach((parent) => {
+      if (!parent.children?.length) return;
+      for (const child of parent.children) {
+        if (child.id && insertedChildren[childIdx]?.id) {
+          childIdMap.set(child.id, insertedChildren[childIdx].id);
+        }
+        childIdx++;
+      }
+    });
+  }
+
+  // schedule_assignments의 step_id를 새 id로 마이그레이션
+  const parentIdMap = new Map<string, string>(); // old parent id -> new parent id
+  parsed.data.steps.forEach((step, index) => {
+    if (step.id && insertedParents[index]?.id) {
+      parentIdMap.set(step.id, insertedParents[index].id);
+    }
+  });
+  const allIdMap = new Map([...parentIdMap, ...childIdMap]);
+  if (allIdMap.size > 0) {
+    await Promise.all(
+      [...allIdMap.entries()].map(([oldId, newId]) =>
+        supabase.from("schedule_assignments").update({ step_id: newId }).eq("step_id", oldId),
+      ),
+    );
   }
 
   res.status(200).json({ ok: true });
