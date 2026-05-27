@@ -51,6 +51,7 @@ router.get("/weekly", async (req, res) => {
       time_spent,
       decompositions (
         project_id,
+        round,
         projects ( id, title, color, due )
       )
     `)
@@ -58,10 +59,20 @@ router.get("/weekly", async (req, res) => {
     .gte("updated_at", toISOStr(fourWeeksAgo))
     .not("decompositions.projects.user_id", "is", null);
 
-  // user 소유 필터 (RLS가 처리하지만 join 결과 방어)
+  // user 소유 필터 + 최신 round만 포함
+  // 프로젝트별 최대 round 계산
+  const maxRoundByProject = new Map<string, number>();
+  for (const s of doneSteps ?? []) {
+    const d = s.decompositions as any;
+    if (!d?.projects) continue;
+    const pid = d.project_id;
+    const r = d.round ?? 0;
+    if ((maxRoundByProject.get(pid) ?? -1) < r) maxRoundByProject.set(pid, r);
+  }
   const ownDoneSteps = (doneSteps ?? []).filter((s: any) => {
-    const proj = s.decompositions?.projects;
-    return proj != null;
+    const d = s.decompositions;
+    if (!d?.projects) return false;
+    return (d.round ?? 0) === (maxRoundByProject.get(d.project_id) ?? 0);
   });
 
   // ── 3. 전체 프로젝트 현황 조회 (진행 중인 것) ────────────────────────────
@@ -108,7 +119,8 @@ router.get("/weekly", async (req, res) => {
   const projectStats = (projects ?? []).map((p: any) => {
     // 최신 decomposition만 사용 (round가 가장 높은 것)
     const decomps = p.decompositions ?? [];
-    const allSteps = decomps.flatMap((d: any) => d.steps ?? []);
+    const latestDecomp = decomps.reduce((a: any, b: any) => (b.round ?? 0) > (a.round ?? 0) ? b : a, decomps[0] ?? {});
+    const allSteps = (latestDecomp?.steps ?? []) as any[];
     const topLevel = allSteps.filter((s: any) => s.parent_step_id === null);
     const totalCount = topLevel.length;
     const doneCount = topLevel.filter((s: any) => s.done).length;
@@ -220,6 +232,13 @@ router.post("/ai-summary", async (req, res) => {
     const message = await anthropic.messages.create({
       model: env.ANTHROPIC_MODEL,
       max_tokens: 1024,
+      system: [
+        {
+          type: "text",
+          text: "You are a productivity insight assistant. Always respond with valid JSON only — no explanation, no markdown, no code fences. Output must be a single JSON object.",
+          cache_control: { type: "ephemeral" },
+        },
+      ],
       messages: [{ role: "user", content: userPrompt }],
     });
 

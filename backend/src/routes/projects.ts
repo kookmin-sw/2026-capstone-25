@@ -54,6 +54,11 @@ type StepDetailRow = StepRow & {
   parent_step_id: string | null;
   description: string | null;
   boundary_signal: string | null;
+  time_spent: number | null;
+  estimated_minutes: number | null;
+  guide: string | null;
+  first_move: string | null;
+  unblocker: string | null;
 };
 
 router.use(authMiddleware);
@@ -385,7 +390,7 @@ router.patch("/:id/steps", async (req, res) => {
   if (latestDecompId) {
     const { data: existingSteps } = await supabase
       .from("steps")
-      .select("id, decomposition_id, parent_step_id, order_idx, title, done, description, boundary_signal")
+      .select("id, decomposition_id, parent_step_id, order_idx, title, done, description, boundary_signal, time_spent, estimated_minutes, guide, first_move, unblocker")
       .eq("decomposition_id", latestDecompId);
     for (const s of (existingSteps ?? []) as StepDetailRow[]) {
       existingStepMap.set(s.id, s);
@@ -412,6 +417,11 @@ router.patch("/:id/steps", async (req, res) => {
       description: existing?.description ?? null,
       boundary_signal: existing?.boundary_signal ?? null,
       done: existing?.done ?? false,
+      time_spent: existing?.time_spent ?? 0,
+      estimated_minutes: existing?.estimated_minutes ?? null,
+      guide: existing?.guide ?? null,
+      first_move: existing?.first_move ?? null,
+      unblocker: existing?.unblocker ?? null,
     };
   });
 
@@ -432,6 +442,11 @@ router.patch("/:id/steps", async (req, res) => {
     description: string | null;
     boundary_signal: string | null;
     done: boolean;
+    time_spent: number;
+    estimated_minutes: number | null;
+    guide: string | null;
+    first_move: string | null;
+    unblocker: string | null;
   }> = [];
   let nextChildOrderIdx = parsed.data.steps.length;
   parsed.data.steps.forEach((parent, parentIdx) => {
@@ -447,16 +462,52 @@ router.patch("/:id/steps", async (req, res) => {
         description: existingChild?.description ?? null,
         boundary_signal: existingChild?.boundary_signal ?? null,
         done: existingChild?.done ?? false,
+        time_spent: existingChild?.time_spent ?? 0,
+        estimated_minutes: existingChild?.estimated_minutes ?? null,
+        guide: existingChild?.guide ?? null,
+        first_move: existingChild?.first_move ?? null,
+        unblocker: existingChild?.unblocker ?? null,
       });
     }
   });
 
+  // 자식 단계 insert + old→new id 매핑
+  const childIdMap = new Map<string, string>(); // old child id -> new child id
   if (childRows.length > 0) {
-    const { error: childError } = await supabase.from("steps").insert(childRows);
-    if (childError) {
-      res.status(500).json({ error: childError.message });
+    const { data: insertedChildren, error: childError } = await supabase
+      .from("steps")
+      .insert(childRows)
+      .select("id");
+    if (childError || !insertedChildren) {
+      res.status(500).json({ error: childError?.message ?? "Failed to insert child steps" });
       return;
     }
+    let childIdx = 0;
+    parsed.data.steps.forEach((parent) => {
+      if (!parent.children?.length) return;
+      for (const child of parent.children) {
+        if (child.id && insertedChildren[childIdx]?.id) {
+          childIdMap.set(child.id, insertedChildren[childIdx].id);
+        }
+        childIdx++;
+      }
+    });
+  }
+
+  // schedule_assignments의 step_id를 새 id로 마이그레이션
+  const parentIdMap = new Map<string, string>(); // old parent id -> new parent id
+  parsed.data.steps.forEach((step, index) => {
+    if (step.id && insertedParents[index]?.id) {
+      parentIdMap.set(step.id, insertedParents[index].id);
+    }
+  });
+  const allIdMap = new Map([...parentIdMap, ...childIdMap]);
+  if (allIdMap.size > 0) {
+    await Promise.all(
+      [...allIdMap.entries()].map(([oldId, newId]) =>
+        supabase.from("schedule_assignments").update({ step_id: newId }).eq("step_id", oldId),
+      ),
+    );
   }
 
   res.status(200).json({ ok: true });
