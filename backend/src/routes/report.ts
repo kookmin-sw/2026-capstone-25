@@ -82,6 +82,7 @@ router.get("/weekly", async (req, res) => {
       id, title, color, due, created_at,
       decompositions (
         id,
+        round,
         steps ( id, done, parent_step_id, time_spent )
       )
     `)
