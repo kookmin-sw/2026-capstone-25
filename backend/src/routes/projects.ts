@@ -129,10 +129,11 @@ router.get("/", async (req, res) => {
     projects: projectRows.map((project) => {
       const decompositionId = latestDecompositionByProject.get(project.id);
       const projectSteps = decompositionId ? stepsByDecomposition.get(decompositionId) ?? [] : [];
-      const doneCount = projectSteps.filter((step) => step.done).length;
-      const totalCount = projectSteps.length;
+      const topLevelSteps = projectSteps.filter((step) => step.parent_step_id === null);
+      const doneCount = topLevelSteps.filter((step) => step.done).length;
+      const totalCount = topLevelSteps.length;
       const progress = totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100);
-      const nextStep = projectSteps.find((step) => !step.done) ?? null;
+      const nextStep = topLevelSteps.find((step) => !step.done) ?? null;
       const firstStepId = projectSteps[0]?.id ?? null;
       const schedulableSteps = projectSteps
         .filter((step) => !step.done)

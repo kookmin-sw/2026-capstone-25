@@ -82,6 +82,7 @@ router.get("/weekly", async (req, res) => {
       id, title, color, due, created_at,
       decompositions (
         id,
+        round,
         steps ( id, done, parent_step_id, time_spent )
       )
     `)
@@ -231,7 +232,7 @@ router.post("/ai-summary", async (req, res) => {
   try {
     const message = await anthropic.messages.create({
       model: env.ANTHROPIC_MODEL,
-      max_tokens: 1024,
+      max_tokens: 2048,
       system: [
         {
           type: "text",
@@ -251,6 +252,7 @@ router.post("/ai-summary", async (req, res) => {
     const summary = JSON.parse(jsonMatch[0]);
     res.json(summary);
   } catch (err) {
+    console.error("[ai-summary error]", err);
     res.status(500).json({ error: "AI 분석 중 오류가 발생했어요." });
   }
 });
