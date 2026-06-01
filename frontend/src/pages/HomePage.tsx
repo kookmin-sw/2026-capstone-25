@@ -107,9 +107,10 @@ export default function HomePage() {
     setTab("direct");
   }
 
-  // 적용된 템플릿 제거 — 입력 값은 그대로 두되 뱃지와 structureHint 전달만 끊는다.
+  // 적용된 템플릿 제거 — 뱃지·structureHint 전달을 끊고 prefill 된 메모도 초기화한다.
   function clearTemplateBadge() {
     setSelectedTemplate(null);
+    setValue("description", "", { shouldDirty: true });
   }
 
   async function onSubmit(values: FormValues) {
@@ -172,7 +173,7 @@ export default function HomePage() {
               <div className="flex items-center gap-2 min-w-0">
                 <span className="text-base leading-none" aria-hidden>{selectedTemplate.icon}</span>
                 <span className="text-xs font-black truncate">
-                  📋 {selectedTemplate.name} 템플릿 적용 중
+                  {selectedTemplate.name} 템플릿 적용 중
                 </span>
               </div>
               <button
