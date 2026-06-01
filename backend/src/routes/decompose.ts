@@ -335,16 +335,20 @@ function extractJsonObject(raw: string): string | null {
 async function callAnthropic(
   input: AnyDecomposeInput,
   previousIssues?: ValidationIssue[],
+  label = "initial",
 ): Promise<string> {
+  const startedAt = Date.now();
   const response = await anthropic.messages.create({
     model: env.ANTHROPIC_MODEL,
     max_tokens: 8192,
     system: DECOMPOSE_SYSTEM_PROMPT,
     messages: [{ role: "user", content: buildUserMessage(input, previousIssues) }],
   });
+  const elapsedMs = Date.now() - startedAt;
 
-  // 캐시 현황 로그 — user 메시지의 마지막 stable 블록에 박은 cache_control이 적중했는지 한 줄로.
+  // 캐시 현황 + latency 로그 — user 메시지의 마지막 stable 블록에 박은 cache_control이 적중했는지 한 줄로.
   // input_tokens는 캐시에 적중하지 않은 입력만 카운트되고, cache_read/write는 별도 필드로 들어온다.
+  // elapsed_ms와 output 토큰을 함께 찍어 "단일 호출 latency가 출력 토큰에 비례하는지"를 호출별로 본다.
   const u = response.usage;
   const cacheRead = u.cache_read_input_tokens ?? 0;
   const cacheWrite = u.cache_creation_input_tokens ?? 0;
@@ -352,7 +356,7 @@ async function callAnthropic(
   const totalIn = cacheRead + cacheWrite + miss;
   const hitPct = totalIn > 0 ? Math.round((cacheRead / totalIn) * 100) : 0;
   console.log(
-    `[decompose] usage: input(miss)=${miss}, cache_write=${cacheWrite}, cache_read=${cacheRead}, output=${u.output_tokens}, hit_rate=${hitPct}%, stop=${response.stop_reason}`,
+    `[decompose] (${label}) usage: input(miss)=${miss}, cache_write=${cacheWrite}, cache_read=${cacheRead}, output=${u.output_tokens}, hit_rate=${hitPct}%, stop=${response.stop_reason}, elapsed_ms=${elapsedMs}`,
   );
 
   return response.content
@@ -364,8 +368,9 @@ async function callAnthropic(
 async function decomposeOnce(
   input: AnyDecomposeInput,
   previousIssues?: ValidationIssue[],
+  label = "initial",
 ): Promise<DecomposeResult | null> {
-  const text = await callAnthropic(input, previousIssues);
+  const text = await callAnthropic(input, previousIssues, label);
   console.log("[decompose] raw text length:", text.length);
   console.log("[decompose] raw text preview:", text.slice(0, 500));
 
@@ -402,9 +407,21 @@ async function runDecompose(
   status: number;
   body: DecomposeApiResponse | { error: string };
 }> {
-  let decomposed = await decomposeOnce(input);
-  if (!decomposed) decomposed = await decomposeOnce(input); // 파싱 실패 시 1회 재시도
+  // 한 요청에서 Anthropic을 몇 번 호출했고 전체 얼마나 걸렸는지 추적한다.
+  // calls=1 인데 total_ms 가 크면 단일 호출의 출력 토큰이 병목, calls>1 이면 재시도 누적이 병목.
+  const runStartedAt = Date.now();
+  let calls = 0;
+
+  calls++;
+  let decomposed = await decomposeOnce(input, undefined, "initial");
   if (!decomposed) {
+    calls++;
+    decomposed = await decomposeOnce(input, undefined, "parse-retry"); // 파싱 실패 시 1회 재시도
+  }
+  if (!decomposed) {
+    console.log(
+      `[decompose] run failed: kind=${input.kind}, calls=${calls}, total_ms=${Date.now() - runStartedAt}`,
+    );
     return {
       status: 422,
       body: { error: "AI 응답을 스키마에 맞게 파싱하지 못했습니다." },
@@ -426,7 +443,8 @@ async function runDecompose(
   // blocker만 자동 재시도. warning은 노출만.
   if (hasBlocker) {
     const blockers = issues.filter((i) => i.severity === "blocker");
-    const retried = await decomposeOnce(input, blockers);
+    calls++;
+    const retried = await decomposeOnce(input, blockers, "blocker-retry");
     if (retried) {
       let retriedSteps = retried.steps;
       if (input.kind === "secondary") {
@@ -437,6 +455,10 @@ async function runDecompose(
       issues = validate(retriedSteps).issues;
     }
   }
+
+  console.log(
+    `[decompose] run done: kind=${input.kind}, calls=${calls}, total_ms=${Date.now() - runStartedAt}, steps=${decomposed.steps.length}, issues=${issues.length}`,
+  );
 
   return {
     status: 200,
